@@ -4,4 +4,4 @@ title: About
 permalink: /about/
 ---
 
-Hi, my name is Inar
+[My CV](/assets/Timiryasov_resume.pdf)
