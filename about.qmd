@@ -1,0 +1,47 @@
+---
+title: Inar Timiryasov
+image: profile.jpg
+about:
+  template: trestles
+  links:
+    - icon: twitter
+      text: X
+      href: https://twitter.com/ITimiryasov
+    - icon: linkedin
+      text: LinkedIn
+      href: https://linkedin.com/in/inar-timiryasov
+    - icon: github
+      text: Github
+      href: https://github.com/timinar
+
+---
+
+I am a postdoc at the University of Copenhagen working on the intersection of AI and particle physics. 
+<!-- I am a Senior Postdoctoral Researcher at the Niels Bohr Institute, University of Copenhagen, specializing in the intersection of AI and particle physics. My work involves leveraging advanced machine learning techniques to unravel complex phenomena in particle physics. -->
+
+
+[My CV](/assets/Timiryasov_resume.pdf)
+
+## Work Experience
+
+- **Postdoctoral Researcher** (2021--present)  
+  *Niels Bohr Institute, University of Copenhagen*\
+  Developing AI models for applications in particle physics, including methods to reinterpret LHC data analysis pipelines.
+
+  I also trained Baby Llamas!
+
+- **Visiting Researcher** (2016--present)  
+  *CERN*\
+  Member of the SHiP collaboration searching for new feebly interacting particles.
+
+- **Postdoctoral Researcher** (2016--2021)  
+  *École Polytechnique Fédérale de Lausanne*\
+  Worked on transforming theoretical problems into computable models, taught courses, and supervised Master’s students.
+
+
+<!-- - **Professional Experience**: Copenhagen Univeristy, CERN, École Polytechnique Fédérale de Lausanne.
+- **Key Projects**: Training LLMs in BabyLM challenge (top 5%), AI models in particle physics, Kaggle Competitions (Gold and Silver Medals).
+- **Teaching and Mentoring**: Courses in group theory, classical field theory; supervision of Master’s students.
+- **Technical Expertise**: Python, Julia, PyTorch, Transformers, Pandas, Linux, Git, and more. -->
+
+

@@ -1,0 +1,24 @@
+project:
+  type: website
+  output-dir: docs
+website:
+  title: "Blog"
+  site-url: https://timinar.github.io
+  navbar:
+    right:
+      - about.qmd
+      # - icon: github
+      #   href: https://github.com/timinar
+      # - icon: twitter
+      #   href: https://twitter.com/ITimiryasov
+format:
+  html:
+    theme:
+      light: simplex
+      dark: solar
+    # theme: simplex
+    css: styles.css
+    linkcolor: steelblue
+
+
+
