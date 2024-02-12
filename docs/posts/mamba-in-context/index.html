@@ -200,6 +200,8 @@ window.Quarto = {
 - html with predictions
 - cite the recent paper with vocab size = 40
 -->
+<section id="draft-2024-02-12" class="level1">
+<h1>DRAFT 2024-02-12</h1>
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction"><strong>Introduction</strong></h2>
 <p>Mamba <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao 2023</a>)</span> is an architecture based on a Selective Structured State-Space model. Recently it has taken the community by storm – and for a good reason. It features linear complexity in the sequence length and outperforms transformers of the similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation <span class="citation" data-cites="ma2024u">(<a href="#ref-ma2024u" role="doc-biblioref">Ma, Li, and Wang 2024</a>)</span>. We are excited to see if Mamba could be used to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
@@ -369,7 +371,7 @@ Figure&nbsp;7: In-context learning score and eval loss for SSMs and attention-on
 <section id="mathematical-formulation-of-ssm" class="level3">
 <h3 class="anchored" data-anchor-id="mathematical-formulation-of-ssm"><strong>Mathematical Formulation of SSM</strong></h3>
 <p>Originally, the discovery of the induction heads became possible due to a neat mathematical formulation of transformers <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>. Here we report our initial attempt to provide a similar formulation for the SSMs.</p>
-<p>One difficulty that we immediately encouter is the presence of different dimensions in the model: the hidden dimension (in Mamba it is twice of the residual stream), the sequence length, and the state-space dimension. This makes it hard to distinguish between different multiplications. To make things as clear as possible, we will write all indices explicitly and use the Einstein summation convention. Furthermore, we will denote indices in such a way that it is clear what they mean. Namely, we will use letters <span class="math inline">\(s, t, r\)</span> for the sequence position, <span class="math inline">\(i, j, k, l\)</span> for the hidden dimension,<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> and <span class="math inline">\(\alpha, \beta\)</span> for the state-space dimension. We will ignore the batch dimension since it could be trivially added.</p>
+<p>One difficulty that we immediately encounter is the presence of different dimensions in the model: the hidden dimension (in Mamba it is twice of the residual stream), the sequence length, and the state-space dimension. This makes it hard to distinguish between different multiplications. To make things as clear as possible, we will write all indices explicitly and use the Einstein summation convention. Furthermore, we will denote indices in such a way that it is clear what they mean. Namely, we will use letters <span class="math inline">\(s, t, r\)</span> for the sequence position, <span class="math inline">\(i, j, k, l\)</span> for the hidden dimension,<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> and <span class="math inline">\(\alpha, \beta\)</span> for the state-space dimension. We will ignore the batch dimension since it could be trivially added.</p>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -382,7 +384,7 @@ The usual attention
 <div class="callout-body-container callout-body">
 <p>To warm up, let’s start with the usual transformer. The output of one attention head can be written as <span class="math display">\[
 y_{t\,i} = A_{t\,s}(x) \, v_{s\,i},
-\]</span> where <span class="math inline">\(A_{t\,s}\)</span> are the attention scores whcih depend on all inputs, but have only the sequence indices. Notice that we sum over the repeated indices. Writinig this equation explicitly we have <span class="math display">\[
+\]</span> where <span class="math inline">\(A_{t\,s}\)</span> are the attention scores which depend on all inputs, but have only the sequence indices. Notice that we sum over the repeated indices. Writing this equation explicitly we have <span class="math display">\[
 y_{t\,i} = \text{softmax} \left( x_{s\, k} W^Q_{k\, \alpha}  W^K_{l\, \alpha} x_{t\, l} \right)\; W^O_{i\, \beta}\, W^V_{j\, \beta}\, x_{s\, j}.
 \]</span> Notice that $ W^Q_{k, } W^K_{l, }$ and <span class="math inline">\(W^O_{i\, \beta}\, W^V_{j\, \beta}\)</span> are low-rank matrices (here <span class="math inline">\(\alpha\)</span> goes from 1 to hidden_size/num_heads). We can rewrite the previous equation as<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> <span id="eq-attention"><span class="math display">\[
 y_{t\,i} = \text{softmax} \left( x_{s\, k} W^{KQ}_{k\,l} x_{t\, l} \right)\; W^{OV}_{i\,j}\, x_{s\, j}.
@@ -433,6 +435,7 @@ g^{\alpha\beta}_{s\,t\,i}(x) &amp;= \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \
 
 </section>
 </section>
+</section>
 
 
 <div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
@@ -463,7 +466,7 @@ Tsai, Yao-Hung Hubert, Shaojie Bai, Makoto Yamada, Louis-Philippe Morency, and R
 </div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
 
 <ol>
-<li id="fn1"><p>This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photo detectors that collect the data. Transformers are in general well suited for this task. But their quadratic dependence on the input length doesn’t allow to study the brightest events that have hundreds of thousands of pulses.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1"><p>This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photodetectors that collect the data. Transformers are in general well suited for this task. But their quadratic dependence on the input length doesn’t allow to study the brightest events that have hundreds of thousands of pulses.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>Think of [A] being “Harry” and [B] being “Potter”. If “Harry Potter” was present in the context already, the model will predict “Potter” after “Harry” with high probability.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn3"><p>Garbage in – garbage out. It is actually really impressive that transformers deal with this so easily<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn4"><p>We use the same tokenizer and the same model size with only the learning rate tuned for each model separately.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>

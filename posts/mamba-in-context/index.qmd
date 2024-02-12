@@ -25,10 +25,12 @@ execute:
 - cite the recent paper with vocab size = 40
 -->
 
+# DRAFT 2024-02-12
+
 ## **Introduction**
 
 Mamba [@gu2023mamba] is an architecture based on a Selective Structured State-Space model.
-Recently it has taken the community by storm -- and for a good reason. It features linear complexity in the sequence length and outperforms transformers of the similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation [@ma2024u]. We are excited to see if Mamba could be used to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.^[This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photo detectors that collect the data.
+Recently it has taken the community by storm -- and for a good reason. It features linear complexity in the sequence length and outperforms transformers of the similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation [@ma2024u]. We are excited to see if Mamba could be used to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.^[This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photodetectors that collect the data.
 Transformers are in general well suited for this task. But their quadratic dependence on the input length doesn't allow to study the brightest events that have hundreds of thousands of pulses.]
 
 Interestingly, the model design has been in part motivated by the mechanistic interpretability [@elhage2021mathematical] studies and specifically the idea of in-context learning and induction heads [@olsson2022context]. 
@@ -322,7 +324,7 @@ But for the 2-layer SSM the drop is far less significant. In fact, we have check
 ### **Mathematical Formulation of SSM**
 Originally, the discovery of the induction heads became possible due to a neat mathematical formulation of transformers [@elhage2021mathematical]. Here we report our initial attempt to provide a similar formulation for the SSMs.
 
-One difficulty that we immediately encouter is the presence of different dimensions in the model: the hidden dimension (in Mamba it is twice of the residual stream), the sequence length, and the state-space dimension. This makes it hard to distinguish between different multiplications. To make things as clear as possible, we will write all indices explicitly and use the Einstein summation convention. Furthermore, we will denote indices in such a way that it is clear what they mean.
+One difficulty that we immediately encounter is the presence of different dimensions in the model: the hidden dimension (in Mamba it is twice of the residual stream), the sequence length, and the state-space dimension. This makes it hard to distinguish between different multiplications. To make things as clear as possible, we will write all indices explicitly and use the Einstein summation convention. Furthermore, we will denote indices in such a way that it is clear what they mean.
 Namely, we will use letters $s, t, r$ for the sequence position, $i, j, k, l$ for the hidden dimension,^[Notice that Mamba expands the residual stream by a factor of two, so the hidden dimension is twice the embedding dimension.] and $\alpha, \beta$ for the state-space dimension. We will ignore the batch dimension since it could be trivially added.
 
 ::: {.callout-tip}
@@ -332,7 +334,7 @@ The output of one attention head can be written as
 $$
 y_{t\,i} = A_{t\,s}(x) \, v_{s\,i},
 $$
-where $A_{t\,s}$ are the attention scores whcih depend on all inputs, but have only the sequence indices. Notice that we sum over the repeated indices. Writinig this equation explicitly we have
+where $A_{t\,s}$ are the attention scores which depend on all inputs, but have only the sequence indices. Notice that we sum over the repeated indices. Writing this equation explicitly we have
 $$
 y_{t\,i} = \text{softmax} \left( x_{s\, k} W^Q_{k\, \alpha}  W^K_{l\, \alpha} x_{t\, l} \right)\; W^O_{i\, \beta}\, W^V_{j\, \beta}\, x_{s\, j}.
 $$
