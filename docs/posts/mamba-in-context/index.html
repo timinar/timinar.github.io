@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.536">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Inar Timiryasov">
+<meta name="author" content="Jean-Loup Tastet">
+<meta name="dcterms.date" content="2024-02-10">
+
+<title>Blog - Mamba and in-context learing: initial look</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for citations */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging-indent div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../../styles.css">
+</head>
+
+<body class="nav-fixed fullcontent">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top quarto-banner">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Blog</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll ms-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../about.html"> 
+<span class="menu-text">Inar Timiryasov</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+          <div class="quarto-navbar-tools">
+  <a href="" class="quarto-color-scheme-toggle quarto-navigation-tool  px-1" onclick="window.quartoToggleColorScheme(); return false;" title="Toggle dark mode"><i class="bi"></i></a>
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<header id="title-block-header" class="quarto-title-block default page-columns page-full">
+  <div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Mamba and in-context learing: initial look</h1>
+                      </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      <div>
+      <div class="quarto-title-meta-heading">Authors</div>
+      <div class="quarto-title-meta-contents">
+               <p>Inar Timiryasov </p>
+               <p>Jean-Loup Tastet </p>
+            </div>
+    </div>
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">February 10, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+  
+  </header><div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content quarto-banner-title-block" id="quarto-document-content">
+
+
+
+
+
+<!-- todo: 
+- redo plots
+- html with predictions
+- cite the recent paper with vocab size = 40
+-->
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction"><strong>Introduction</strong></h2>
+<p>Mamba <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao 2023</a>)</span> is an architecture based on a Selective Structured State-Space model. Recently it has taken the community by storm – and for a good reason. It features linear complexity in the sequence length and outperforms transformers of the similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation <span class="citation" data-cites="ma2024u">(<a href="#ref-ma2024u" role="doc-biblioref">Ma, Li, and Wang 2024</a>)</span>. We are excited to see if Mamba could be used to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>Interestingly, the model design has been in part motivated by the mechanistic interpretability <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span> studies and specifically the idea of in-context learning and induction heads <span class="citation" data-cites="olsson2022context">(<a href="#ref-olsson2022context" role="doc-biblioref">Olsson et al. 2022</a>)</span>.</p>
+<p>So here we will take a look at the in-context learning in Mamba.</p>
+</section>
+<section id="in-context-learning" class="level2">
+<h2 class="anchored" data-anchor-id="in-context-learning"><strong>In-Context Learning</strong></h2>
+<p>By in-context learning we mean the ability of the model to learn during the inference time using the information from the context. This most clearly manifests itself as the decrease of the per-token loss as a function of the token position in the sequence, see Figure <a href="#fig-in-context" class="quarto-xref">Figure&nbsp;1</a>.</p>
+<!-- placeholder: create a better plot
+![Loss per token as a function of token position, averaged over 200 sequences. Children stories.](fig/incontext-loss.png){fig-align="center" width=60% #fig-in-context} -->
+<div id="cell-fig-in-context" class="cell" data-execution_count="1">
+<div class="cell-output cell-output-display">
+<div id="fig-in-context" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-in-context-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-in-context-output-1.png" width="576" height="429" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-in-context-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;1: Loss per token as a function of token position, averaged over 200 sequences. Children stories dataset.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Induction heads are believed to be central to the in-context learning. So what are they? Induction heads are circuits that allow model to predict [B] after [A] if the pair [A][B] has already appeared in the context.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> Induction heads are already present in two layer attention only transformers (but not in single layer ones).</p>
+<!-- add predictions html-->
+<p>Mamba and the predecessor model H3 <span class="citation" data-cites="fu2022hungry">(<a href="#ref-fu2022hungry" role="doc-biblioref">Fu et al. 2022</a>)</span> have been designed with the idea of induction heads in mind.</p>
+</section>
+<section id="mamba-phenomenological-study" class="level2">
+<h2 class="anchored" data-anchor-id="mamba-phenomenological-study"><strong>Mamba: phenomenological study</strong></h2>
+<p>How can we check the in-context learning ability of Mamba? One simple test is to feed the model with garbage repeated twice. Quite amusingly, transformers are able to learn the pattern and predict the second half of the sequence with high accuracy, like in <a href="#fig-random-qwen" class="quarto-xref">Figure&nbsp;2</a>.</p>
+<!-- placeholder: create a better plot-->
+<!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/qwen-random-tokens.png){fig-align="center" width=60% #fig-random-qwen} -->
+<div id="cell-fig-random-qwen" class="cell" data-execution_count="2">
+<div class="cell-output cell-output-display">
+<div id="fig-random-qwen" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-random-qwen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-random-qwen-output-1.png" width="585" height="429" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-random-qwen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>So what about mamba? We used <a href="https://huggingface.co/state-spaces/mamba-790m">this</a> model. Here is the result:</p>
+<!-- placeholder: create a better plot-->
+<!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/mamba-random-tokens.png){fig-align="center" width=60% #fig-random-mamba} -->
+<div id="cell-fig-random-mamba" class="cell" data-execution_count="3">
+<div class="cell-output cell-output-display">
+<div id="fig-random-mamba" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-random-mamba-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-random-mamba-output-1.png" width="585" height="429" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-random-mamba-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;3: Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Ok, what about longer contexts? The mamba should be able to handle really long sequences, right?</p>
+<!-- placeholder: create a better plot-->
+<!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/mamba-random-tokens-long.jpeg){fig-align="center" width=60% #fig-random-mamba-long} -->
+<div id="cell-fig-random-mamba-long" class="cell" data-execution_count="4">
+<div class="cell-output cell-output-display">
+<div id="fig-random-mamba-long" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-random-mamba-long-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-random-mamba-long-output-1.png" width="585" height="429" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-random-mamba-long-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;4: Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Oops! So, we can see that a small transformer deals with this easily, but Mamba struggles. Notice that this is a very artificial test though. The data is completely out of distribution.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> Maybe the model learns N-gram statistics too well and the induction heads cannot change the predictions.</p>
+<p>So what about normal texts?</p>
+<!-- placeholder: create a better plot-->
+<!-- ::: {#fig-losses layout-ncol=2}
+
+![Qwen](fig/incontext-loss.png){width=90%}
+
+![Mamba](fig/incontext-loss-mamba.png){width=90%}
+
+Loss per token as a function of token position, averaged over 200 sequences. Children stories.
+::: -->
+<div id="cell-fig-losses" class="cell" data-execution_count="5">
+<div class="cell-output cell-output-display">
+<div id="fig-losses" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-losses-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-losses-output-1.png" width="756" height="374" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-losses-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;5: Loss per token as a function of token position, averaged over 200 sequences. Children stories dataset.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<section id="in-context-learning-score" class="level3">
+<h3 class="anchored" data-anchor-id="in-context-learning-score"><strong>In-Context Learning Score</strong></h3>
+<p>Introduce the score…</p>
+<!-- placeholder: create a better plot-->
+<!-- ::: {#fig-scores layout-ncol=2}
+
+![](fig/score.png){width=90%}
+
+![](fig/loss.png){width=90%}
+
+Score and eval loss.
+::: -->
+<div id="cell-fig-scores" class="cell" data-execution_count="6">
+<div class="cell-output cell-output-display">
+<div id="fig-scores" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-scores-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-scores-output-1.png" width="758" height="374" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scores-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;6: In-context learning score and eval loss for Mamba and attention-only transformers.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="understanding-selective-ssms" class="level2">
+<h2 class="anchored" data-anchor-id="understanding-selective-ssms"><strong>Understanding Selective SSMs</strong></h2>
+<section id="preliminaries" class="level3">
+<h3 class="anchored" data-anchor-id="preliminaries"><strong>Preliminaries</strong></h3>
+<p>Mamba is more intricate than a transformer since it involves a selective state space model and gating, see <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao 2023</a>)</span>. It is known, however, that already attention-only transformers exhibit interesting behavior <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>. Can we analogously consider a model based on the SSM, without convolutions and gating?</p>
+<p>We have trained several models on PG-19 dataset <span class="citation" data-cites="raecompressive2019">(<a href="#ref-raecompressive2019" role="doc-biblioref">Rae et al. 2019</a>)</span>. Those included: single layer and two layer transformers with RoPE position encoding, Mamba, and SSM-only models. Mamba and Transformer training is shown in figure <a href="#fig-scores" class="quarto-xref">Figure&nbsp;6</a>, while SSMs and transformers are shown in figure <a href="#fig-scores-ssm" class="quarto-xref">Figure&nbsp;7</a>.</p>
+<!-- placeholder: create a better plot-->
+<!-- ::: {#fig-scores-ssm layout-ncol=2}
+
+![](fig/score-ssm.png){width=90%}
+
+![](fig/loss-ssm.png){width=90%}
+
+In-context learning score and eval loss for SSMs and attention-only transformers.
+::: -->
+<div id="cell-fig-scores-ssm" class="cell" data-execution_count="7">
+<div class="cell-output cell-output-display">
+<div id="fig-scores-ssm" class="quarto-figure quarto-figure-center quarto-float anchored">
+<figure class="quarto-float quarto-float-fig figure">
+<div aria-describedby="fig-scores-ssm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<img src="index_files/figure-html/fig-scores-ssm-output-1.png" width="758" height="374" class="figure-img">
+</div>
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scores-ssm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;7: In-context learning score and eval loss for SSMs and attention-only transformers.
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>Several observations are in order. First, we can see that an SSM only model is already pretty solid in language modelling. Secondly, both single layer attention-only transformer and SSM struggle with in-context learning. This is expected since we know that induction heads can only form in two-layer models <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>. At the same time, SSM has lower loss.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> At two layers things become interesting. The transformer experience a “phase transition” and the score quickly drops.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> But for the 2-layer SSM the drop is far less significant. In fact, we have checked SSMs up to 16 layers and they cannot match the score of two layer attention only transoformer. This is in contrast to the loss, which is lower for SSMs. One can speculate that Selective SSM is better at approximating N-gram statistics, but worse at in-context learning. Can we try to understand why is this the case?</p>
+</section>
+<section id="mathematical-formulation-of-ssm" class="level3">
+<h3 class="anchored" data-anchor-id="mathematical-formulation-of-ssm"><strong>Mathematical Formulation of SSM</strong></h3>
+<p>Originally, the discovery of the induction heads became possible due to a neat mathematical formulation of transformers <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>. Here we report our initial attempt to provide a similar formulation for the SSMs.</p>
+<p>One difficulty that we immediately encouter is the presence of different dimensions in the model: the hidden dimension (in Mamba it is twice of the residual stream), the sequence length, and the state-space dimension. This makes it hard to distinguish between different multiplications. To make things as clear as possible, we will write all indices explicitly and use the Einstein summation convention. Furthermore, we will denote indices in such a way that it is clear what they mean. Namely, we will use letters <span class="math inline">\(s, t, r\)</span> for the sequence position, <span class="math inline">\(i, j, k, l\)</span> for the hidden dimension,<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> and <span class="math inline">\(\alpha, \beta\)</span> for the state-space dimension. We will ignore the batch dimension since it could be trivially added.</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+The usual attention
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>To warm up, let’s start with the usual transformer. The output of one attention head can be written as <span class="math display">\[
+y_{t\,i} = A_{t\,s}(x) \, v_{s\,i},
+\]</span> where <span class="math inline">\(A_{t\,s}\)</span> are the attention scores whcih depend on all inputs, but have only the sequence indices. Notice that we sum over the repeated indices. Writinig this equation explicitly we have <span class="math display">\[
+y_{t\,i} = \text{softmax} \left( x_{s\, k} W^Q_{k\, \alpha}  W^K_{l\, \alpha} x_{t\, l} \right)\; W^O_{i\, \beta}\, W^V_{j\, \beta}\, x_{s\, j}.
+\]</span> Notice that $ W^Q_{k, } W^K_{l, }$ and <span class="math inline">\(W^O_{i\, \beta}\, W^V_{j\, \beta}\)</span> are low-rank matrices (here <span class="math inline">\(\alpha\)</span> goes from 1 to hidden_size/num_heads). We can rewrite the previous equation as<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> <span id="eq-attention"><span class="math display">\[
+y_{t\,i} = \text{softmax} \left( x_{s\, k} W^{KQ}_{k\,l} x_{t\, l} \right)\; W^{OV}_{i\,j}\, x_{s\, j}.
+\tag{1}\]</span></span></p>
+</div>
+</div>
+<p>Now, after some index gymnastic, let’s move to SSMs. The input to the SSM is dented <span class="math inline">\(x_{s, i}\)</span>, the output is <span class="math inline">\(y_{s, i}\)</span>. Notice that in our formulation the hidden state never shows up. Here we list the parameters of the SSM:</p>
+<p><span id="eq-eq-ssm"><span class="math display">\[
+\begin{aligned}
+\Delta_{t\, i} (x) &amp;= \text{softplus}(W^\Delta_{i\, j}\, x_{t\, j}),\\
+B_{t\, \alpha}(x) &amp;= W^B_{\alpha\, i} \, x_{t\, i},\\
+C_{t\, \alpha}(x) &amp;= W^C_{\alpha\, i} \, x_{t\, i},\\
+\bar{A}_{t\,i\,\alpha}(x) &amp;= \exp \left(\Delta_{t\, i}(x)\, A_{i\, \alpha}\right),\\
+\bar{B}_{t\,i\,\alpha}(x) &amp;= \Delta_{t\, i}(x) B_{t\, \alpha}(x).\\
+\end{aligned}
+\tag{2}\]</span></span> We sum over the dummy indices. By dummy indices we mean the indices that appear twice on <em>one side of the euation</em>. For example, <span class="math inline">\(B_{t\, \alpha}(x) = W^B_{\alpha\, i} \, x_{t\, i}\)</span> is a shorthand for <span class="math inline">\(B_{t\, \alpha}(x) = \sum_i W^B_{\alpha\, i} \, x_{t\, i}\)</span>. In matrix notations, we would write it as <span class="math inline">\(B = X\, \left( W^B \right)^T\)</span>. But notice that there is no sum over <span class="math inline">\(i\)</span> and <span class="math inline">\(t\)</span> in <span class="math inline">\(\bar{A}_{t\,i\,\alpha}(x) = \exp \left(\Delta_{t\, i}(x) \cdot A_{i\, \alpha}\right)\)</span> since <span class="math inline">\(i\)</span> and <span class="math inline">\(t\)</span> appear on both the left and the right hand side of the equation. This is precisely the convention of the <code>torch.einsum</code> function.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Selective SSM
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Now, we are ready to take a deep breath and write the output of the SSM: <span id="eq-ssm-attention"><span class="math display">\[
+y_{t\,i} = x_{t\,k} \, W_{\alpha \, k}^C \; \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\; W_{\alpha\,j}^B \,x_{s\,j}\; \Delta_{s\,i}(x)\, x_{s\,i}.
+\tag{3}\]</span></span> Let’s rewrite this as <span id="eq-ssm-attention-short"><span class="math display">\[
+y_{t\,i} = q_{t\, \alpha} \; g^{\alpha\beta}_{s\,t\,i}(x) \; k_{s\, \beta} \; v_{s\,i},
+\tag{4}\]</span></span> where <span class="math display">\[
+\begin{aligned}
+q_{t\, \alpha} &amp;=  W_{\alpha \, k}^C\,x_{t\,k} ,\\
+k_{s\, \beta} &amp;= W_{\alpha\,j}^B \,x_{s\,j} ,\\
+v_{s\,i} &amp;= \Delta_{s\,i}(x)\, x_{s\,i},\\
+g^{\alpha\beta}_{s\,t\,i}(x) &amp;= \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\, \delta_{\alpha\beta}.
+\end{aligned}
+\]</span></p>
+</div>
+</div>
+<p>This looks very similar to attention!</p>
+<p>More specifically, the linear attention without softmax. Matrices <span class="math inline">\(W^B\)</span> and <span class="math inline">\(W^C\)</span> are the analogues of the query and the key matrices in the attention mechanism. They project from the hidden dimension to the much smaller state space dimension. Notice that this is the feature of the <em>selective</em> SSM. In the usual SSMs <span class="math inline">\(B\)</span> and <span class="math inline">\(C\)</span> do not depend on <span class="math inline">\(x\)</span> so this analogy to keys and queries is lost.</p>
+<p>There are important differences though. First, instead of multiple attention heads with different projections, we have only one, but keys and queries are multiplied with a “metric” <span class="math inline">\(g^{\alpha\beta}_{s\,t\,i}(x)\)</span> which is different for every coordinate <span class="math inline">\(i\)</span> across the hidden dimension.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> So, in some sense, we have as many attention heads as there are hidden dimensions.</p>
+<p>Secondly, the value is not just a linear transformation of the token embedding as in the usual attention mechanism <a href="#eq-attention" class="quarto-xref">Equation&nbsp;1</a>. Instead, it is gated by the matrix <span class="math inline">\(\Delta_{s\,i}(x)\)</span>, which in turn depends on the input.</p>
+<p>Those differences might be crucial. To understand why, let’s recall that there are exponentially many almost orthogonal vectors in high dimensions, see e.g.~<span class="citation" data-cites="Tao2013CheapKL">(<a href="#ref-Tao2013CheapKL" role="doc-biblioref">Tao 2013</a>)</span>. So if we perform a linear transformation of the input, like in <a href="#eq-attention" class="quarto-xref">Equation&nbsp;1</a>, we get a new vector that could live in many of different, almost orthogonal subspaces. In the case of the Selective SSM, every “attention head” only writes a single coordinate. Of course, there is a dependence on the other coordinates via <span class="math inline">\(\Delta\)</span>, but due to the softplus function, it serves rather as a <em>gate</em> than as a linear transformation. Therefore, one can speculate that the SSM has access to as many orthogonal subspaces as there are hidden dimensions, whereas the usual attention can utilize exponentially more. This might seem as a plausible explanation of why we do not observe the phase transition in the SSMs. However, we need to be very cautious here. <a href="#eq-ssm-attention" class="quarto-xref">Equation&nbsp;3</a> is very non-linear in <span class="math inline">\(x\)</span> so our intuition from the usual attention might be misleading.</p>
+
+
+
+</section>
+</section>
+
+
+<div id="quarto-appendix" class="default"><section class="quarto-appendix-contents" role="doc-bibliography" id="quarto-bibliography"><h2 class="anchored quarto-appendix-heading">References</h2><div id="refs" class="references csl-bib-body hanging-indent" data-entry-spacing="0" role="list">
+<div id="ref-elhage2021mathematical" class="csl-entry" role="listitem">
+Elhage, Nelson, Neel Nanda, Catherine Olsson, Tom Henighan, Nicholas Joseph, Ben Mann, Amanda Askell, et al. 2021. <span>“A Mathematical Framework for Transformer Circuits.”</span> <em>Transformer Circuits Thread</em> 1.
+</div>
+<div id="ref-fu2022hungry" class="csl-entry" role="listitem">
+Fu, Daniel Y, Tri Dao, Khaled K Saab, Armin W Thomas, Atri Rudra, and Christopher Ré. 2022. <span>“Hungry Hungry Hippos: Towards Language Modeling with State Space Models.”</span> <em>arXiv Preprint arXiv:2212.14052</em>.
+</div>
+<div id="ref-gu2023mamba" class="csl-entry" role="listitem">
+Gu, Albert, and Tri Dao. 2023. <span>“Mamba: Linear-Time Sequence Modeling with Selective State Spaces.”</span> <em>arXiv Preprint arXiv:2312.00752</em>.
+</div>
+<div id="ref-ma2024u" class="csl-entry" role="listitem">
+Ma, Jun, Feifei Li, and Bo Wang. 2024. <span>“U-Mamba: Enhancing Long-Range Dependency for Biomedical Image Segmentation.”</span> <em>arXiv Preprint arXiv:2401.04722</em>.
+</div>
+<div id="ref-olsson2022context" class="csl-entry" role="listitem">
+Olsson, Catherine, Nelson Elhage, Neel Nanda, Nicholas Joseph, Nova DasSarma, Tom Henighan, Ben Mann, et al. 2022. <span>“In-Context Learning and Induction Heads.”</span> <em>arXiv Preprint arXiv:2209.11895</em>.
+</div>
+<div id="ref-raecompressive2019" class="csl-entry" role="listitem">
+Rae, Jack W, Anna Potapenko, Siddhant M Jayakumar, Chloe Hillier, and Timothy P Lillicrap. 2019. <span>“Compressive Transformers for Long-Range Sequence Modelling.”</span> <em>arXiv Preprint</em>. <a href="https://arxiv.org/abs/1911.05507">https://arxiv.org/abs/1911.05507</a>.
+</div>
+<div id="ref-Tao2013CheapKL" class="csl-entry" role="listitem">
+Tao, Terence. 2013. <span>“A Cheap Version of the Kabatjanskii-Levenstein Bound for Almost Orthogonal Vectors.”</span> <a href="https://terrytao.wordpress.com/2013/07/18/a-cheap-version-of-the-kabatjanskii-levenstein-bound-for-almost-orthogonal-vectors/">https://terrytao.wordpress.com/2013/07/18/a-cheap-version-of-the-kabatjanskii-levenstein-bound-for-almost-orthogonal-vectors/</a>.
+</div>
+<div id="ref-tsai2019transformer" class="csl-entry" role="listitem">
+Tsai, Yao-Hung Hubert, Shaojie Bai, Makoto Yamada, Louis-Philippe Morency, and Ruslan Salakhutdinov. 2019. <span>“Transformer Dissection: A Unified Understanding of Transformer’s Attention via the Lens of Kernel.”</span> <em>arXiv Preprint arXiv:1908.11775</em>.
+</div>
+</div></section><section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes"><h2 class="anchored quarto-appendix-heading">Footnotes</h2>
+
+<ol>
+<li id="fn1"><p>This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photo detectors that collect the data. Transformers are in general well suited for this task. But their quadratic dependence on the input length doesn’t allow to study the brightest events that have hundreds of thousands of pulses.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>Think of [A] being “Harry” and [B] being “Potter”. If “Harry Potter” was present in the context already, the model will predict “Potter” after “Harry” with high probability.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Garbage in – garbage out. It is actually really impressive that transformers deal with this so easily<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>We use the same tokenizer and the same model size with only the learning rate tuned for each model separately.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>Our plots agree very well with <span class="citation" data-cites="olsson2022context">(<a href="#ref-olsson2022context" role="doc-biblioref">Olsson et al. 2022</a>)</span> except that the phase change happens earlier in training. We use a rather small vocab size of 16384 and perhaps much smaller batch size of 24 sequence of 2048 tokens.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>Notice that Mamba expands the residual stream by a factor of two, so the hidden dimension is twice the embedding dimension.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p>See <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>, where OV and KQ compositions have been introduced.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>Interestingly, the exponential depending on sequence positions of the source and destination tokens also appears in the case of the usual position embeddings <span class="citation" data-cites="tsai2019transformer">(<a href="#ref-tsai2019transformer" role="doc-biblioref">Tsai et al. 2019</a>)</span>, but in the usual transformers it doesn’t depend on the token embeddings.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section></div></main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+    let newTheme = '';
+    if(darkModeDefault) {
+      newTheme = isAlternate ? baseTheme : alternateTheme;
+    } else {
+      newTheme = isAlternate ? alternateTheme : baseTheme;
+    }
+    const changeGiscusTheme = () => {
+      // From: https://github.com/giscus/giscus/issues/336
+      const sendMessage = (message) => {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return;
+        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+      }
+      sendMessage({
+        setConfig: {
+          theme: newTheme
+        }
+      });
+    }
+    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+    if (isGiscussLoaded) {
+      changeGiscusTheme();
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  const darkModeDefault = false;
+  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+    toggleGiscusIfUsed(toAlternate, darkModeDefault);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      return note.innerHTML;
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
