@@ -9,6 +9,7 @@ bibliography: SSSM_refs.bib
 draft: true
 execute:
   echo: false
+# reference-location: margin
 # categories:
 # - LLM
 # format:
@@ -30,7 +31,7 @@ execute:
 ## **Introduction**
 
 Mamba [@gu2023mamba] is an architecture based on a Selective Structured State-Space model.
-Recently it has taken the community by storm -- and for a good reason. It features linear complexity in the sequence length and outperforms transformers of the similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation [@ma2024u]. We are excited to see if Mamba could be used to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.^[This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photodetectors that collect the data.
+Recently it has taken the community by storm --- and for a good reason. It features linear complexity in the sequence length and outperforms transformers of similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation [@ma2024u]. We are excited to see if Mamba could be used to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.^[This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photodetectors that collect the data.
 Transformers are in general well suited for this task. But their quadratic dependence on the input length doesn't allow to study the brightest events that have hundreds of thousands of pulses.]
 
 Interestingly, the model design has been in part motivated by the mechanistic interpretability [@elhage2021mathematical] studies and specifically the idea of in-context learning and induction heads [@olsson2022context]. 
@@ -39,14 +40,14 @@ So here we will take a look at the in-context learning in Mamba.
 
 ## **In-Context Learning**
 
-By in-context learning we mean the ability of the model to learn during the inference time using the information from the context. This most clearly manifests itself as the decrease of the per-token loss as a function of the token position in the sequence, see Figure @fig-in-context.
+By in-context learning we mean the ability of the model to learn during the inference time using the information from the context. This most clearly manifests itself as the decrease of the per-token loss as a function of the token position in the sequence, see @fig-in-context.
 
 <!-- placeholder: create a better plot
 ![Loss per token as a function of token position, averaged over 200 sequences. Children stories.](fig/incontext-loss.png){fig-align="center" width=60% #fig-in-context} -->
 
 ```{python}
 #| label: fig-in-context
-#| fig-cap: Loss per token as a function of token position, averaged over 200 sequences. Children stories dataset.
+#| fig-cap: Loss per token as a function of the token position, averaged over 200 sequences. Children stories dataset.
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -60,10 +61,9 @@ plt.legend()
 plt.show(fig)
 ```
 
-Induction heads are believed to be central to the in-context learning. So what are they?
-Induction heads are circuits that allow 
-model to predict [B] after [A] if the pair [A][B] has already appeared in the context.^[Think of [A] being "Harry" and [B] being "Potter". If "Harry Potter" was present in the context already, the model will predict "Potter" after "Harry" with high probability.]
-Induction heads are already present in two layer attention only transformers (but not in single layer ones). 
+Induction heads are believed to be central to in-context learning. So what are they?
+Induction heads are circuits that allow the model to predict [B] after [A] if the pair [A][B] has already appeared in the context.^[Think of [A] being "Harry" and [B] being "Potter". If "Harry Potter" was present in the context already, the model will predict "Potter" after "Harry" with high probability.]
+Induction heads are already present in two layer attention-only transformers (but not in single layer ones). 
 
 <!-- add predictions html-->
 
@@ -73,13 +73,13 @@ Mamba and the predecessor model H3 [@fu2022hungry] have been designed with the i
 
 ## **Mamba: phenomenological study**
 How can we check the in-context learning ability of Mamba?
-One simple test is to feed the model with garbage repeated twice. Quite amusingly, transformers are able to learn the pattern and predict the second half of the sequence with high accuracy, like in @fig-random-qwen.
+One simple test is to feed the model random garbage, repeated twice. Quite amusingly, transformers are able to learn the pattern and predict the second half of the sequence with high accuracy, like in @fig-random-qwen.
 
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/qwen-random-tokens.png){fig-align="center" width=60% #fig-random-qwen} -->
 ```{python}
 #| label: fig-random-qwen
-#| fig-cap: Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
+#| fig-cap: Loss per token as a function of the token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -94,13 +94,13 @@ plt.show(fig)
 ```
 
 
-So what about mamba? We used [this](https://huggingface.co/state-spaces/mamba-790m) model. Here is the result:
+So what about Mamba? We used [this](https://huggingface.co/state-spaces/mamba-790m) model. Here is the result:
 
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/mamba-random-tokens.png){fig-align="center" width=60% #fig-random-mamba} -->
 ```{python}
 #| label: fig-random-mamba
-#| fig-cap: Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
+#| fig-cap: Loss per token as a function of the token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -116,13 +116,13 @@ plt.legend()
 plt.show(fig)
 ```
 
-Ok, what about longer contexts? The mamba should be able to handle really long sequences, right?
+Ok, what about longer contexts? Mamba should be able to handle really long sequences, right?
 
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/mamba-random-tokens-long.jpeg){fig-align="center" width=60% #fig-random-mamba-long} -->
 ```{python}
 #| label: fig-random-mamba-long
-#| fig-cap: Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
+#| fig-cap: Loss per token as a function of the token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -138,7 +138,7 @@ plt.legend()
 plt.show(fig)
 ```
 
-Oops! So, we can see that a small transformer deals with this easily, but Mamba struggles. Notice that this is a very artificial test though. The data is completely out of distribution.^[Garbage in -- garbage out. It is actually really impressive that transformers deal with this so easily] Maybe the model learns N-gram statistics too well and the induction heads cannot change the predictions.
+Oops! So, we can see that a small transformer deals with this easily, but Mamba struggles. Notice that this is a very artificial test, though. The data is completely out of distribution.^[Garbage in --- garbage out. It is actually really impressive that transformers deal with this so easily.] Maybe the model learns N-gram statistics too well and the induction heads cannot change the predictions.
 
 So what about normal texts?
 
@@ -153,7 +153,7 @@ Loss per token as a function of token position, averaged over 200 sequences. Chi
 ::: -->
 ```{python}
 #| label: fig-losses
-#| fig-cap: Loss per token as a function of token position, averaged over 200 sequences. Children stories dataset.
+#| fig-cap: Loss per token as a function of the token position, averaged over 200 sequences. Children stories dataset.
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -169,7 +169,7 @@ ax1.legend()
 ax1.set_title('Qwen Loss')
 
 
-ax2.plot(mamba_loss, label='Mamba-790M')
+ax2.plot(mamba_loss, label='Mamba-790M', color='tab:orange')
 ax2.set_ylim(1.5, 7)
 ax2.set_xlabel('Token position')
 ax2.set_ylabel('Per Token Loss')
@@ -206,6 +206,12 @@ elapsed_tokens = seq_len*np.loadtxt('./data/training/elapsed_tokens.txt')
 
 models = ['llama_1', 'llama_2', 'mamba_1', 'mamba_2']
 labels = ['Llama 1 layer', 'Llama 2 layers', 'Mamba 1 layer', 'Mamba 2 layers']
+styles = [
+    {'color': 'tab:blue'  , 'linestyle': '-' },
+    {'color': 'tab:blue'  , 'linestyle': '--'},
+    {'color': 'tab:orange', 'linestyle': '-' },
+    {'color': 'tab:orange', 'linestyle': '--'},
+]
 eval_losses = [np.loadtxt(f'./data/training/eval_losses_{model}.txt') for model in models]
 per_token_losses = [np.loadtxt(f'./data/training/per_token_losses_{model}.txt') for model in models]
 
@@ -219,29 +225,31 @@ def loss_decrease_score(losses):
 
 scores = [loss_decrease_score(loss) for loss in per_token_losses]
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4)) 
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 6)) 
 
-for model, score in zip(labels, scores):
-    ax1.plot(elapsed_tokens, score, label=model)
+fig.subplots_adjust(hspace=0.25)
 
-for model, eval_loss in zip(labels, eval_losses):
-    ax2.plot(elapsed_tokens, eval_loss, label=model)
+for model, score, sty in zip(labels, scores, styles):
+    ax1.plot(elapsed_tokens, score, label=model, **sty)
 
-plt.tight_layout()  
-ax1.set_xlabel('Elapsed tokens')
+for model, eval_loss, sty in zip(labels, eval_losses, styles):
+    ax2.plot(elapsed_tokens, eval_loss, label=model, **sty)
+
+#plt.tight_layout()  
+#ax1.set_xlabel('Elapsed tokens')
 ax1.set_ylabel('In-context Learning Score')
 ax1.legend()
 ax1.set_ylim(-0.25, 0.0)
-ax1.set_title('Score Decrease Over Training')
+#ax1.set_title('Score Decrease Over Training')
 
 ax2.set_xlabel('Elapsed tokens')
 ax2.set_ylabel('Eval Loss')
 ax2.legend()
-ax2.set_ylim(3.5, 6)
-ax2.set_title('Eval Loss Over Training')
+ax2.set_ylim(3.5, 5.5)
+#ax2.set_title('Eval Loss Over Training')
 
 
-plt.tight_layout()
+#plt.tight_layout()
 plt.show()
 ```
 
@@ -252,9 +260,9 @@ plt.show()
 
 ### **Preliminaries**
 Mamba is more intricate than a transformer since it involves a selective state space model and gating, see [@gu2023mamba].
-It is known, however, that already attention-only transformers exhibit interesting behavior [@elhage2021mathematical]. Can we analogously consider a model based on the SSM, without convolutions and gating?
+It is known, however, that attention-only transformers already exhibit interesting behavior [@elhage2021mathematical]. Can we, analogously, consider a model based on the SSM only, without convolutions and gating?
 
-We have trained several models on PG-19 dataset [@raecompressive2019]. Those included: single layer and two layer transformers with RoPE position encoding, Mamba, and SSM-only models. Mamba and Transformer training is shown in figure @fig-scores, while SSMs and transformers are shown in figure @fig-scores-ssm.
+We have trained several models on PG-19 dataset [@raecompressive2019]. Those included: single-layer and two-layer attention-only transformers with rotary position encoding (RoPE), Mamba, and SSM-only models. The training of Mamba and attention-only transformers is shown in figure @fig-scores, while SSM-only models and attention-only transformers are compared in figure @fig-scores-ssm.
 
 
 <!-- placeholder: create a better plot-->
@@ -278,6 +286,12 @@ elapsed_tokens = seq_len*np.loadtxt('./data/training/elapsed_tokens.txt')
 
 models = ['llama_1', 'llama_2', 'ssm_1', 'ssm_2']
 labels = ['Llama 1 layer', 'Llama 2 layers', 'SSM 1 layer', 'SSM 2 layers']
+styles = [
+    {'color': 'tab:blue', 'linestyle': '-' },
+    {'color': 'tab:blue', 'linestyle': '--'},
+    {'color': 'tab:red' , 'linestyle': '-' },
+    {'color': 'tab:red' , 'linestyle': '--'},
+]
 eval_losses = [np.loadtxt(f'./data/training/eval_losses_{model}.txt') for model in models]
 per_token_losses = [np.loadtxt(f'./data/training/per_token_losses_{model}.txt') for model in models]
 
@@ -291,38 +305,40 @@ def loss_decrease_score(losses):
 
 scores = [loss_decrease_score(loss) for loss in per_token_losses]
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4)) 
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 6)) 
 
-for model, score in zip(labels, scores):
-    ax1.plot(elapsed_tokens, score, label=model)
+fig.subplots_adjust(hspace=0.25)
 
-for model, eval_loss in zip(labels, eval_losses):
-    ax2.plot(elapsed_tokens, eval_loss, label=model)
+for model, score, sty in zip(labels, scores, styles):
+    ax1.plot(elapsed_tokens, score, label=model, **sty)
 
-plt.tight_layout()  
-ax1.set_xlabel('Elapsed tokens')
+for model, eval_loss, sty in zip(labels, eval_losses, styles):
+    ax2.plot(elapsed_tokens, eval_loss, label=model, **sty)
+
+#plt.tight_layout()  
+#ax1.set_xlabel('Elapsed tokens')
 ax1.set_ylabel('In-context Learning Score')
 ax1.legend()
 ax1.set_ylim(-0.25, 0.0)
-ax1.set_title('Score Decrease Over Training')
+#ax1.set_title('Score Decrease Over Training')
 
 ax2.set_xlabel('Elapsed tokens')
 ax2.set_ylabel('Eval Loss')
 ax2.legend()
-ax2.set_ylim(3.5, 6)
-ax2.set_title('Eval Loss Over Training')
+ax2.set_ylim(3.5, 5.5)
+#ax2.set_title('Eval Loss Over Training')
 
 
-plt.tight_layout()
+#plt.tight_layout()
 plt.show()
 ```
 
-Several observations are in order. First,  we can see that an SSM only model is already pretty solid in language modelling. Secondly, both single layer attention-only transformer and SSM struggle with in-context learning. This is expected since we know that induction heads can only form in two-layer models [@elhage2021mathematical]. At the same time, SSM has lower loss.^[We use the same tokenizer and the same model size with only the learning rate tuned for each model separately.]
-At two layers things become interesting. The transformer experience a "phase transition" and the score quickly drops.^[Our plots agree very well with [@olsson2022context] except that the phase change happens earlier in training. We use a rather small vocab size of 16384 and perhaps much smaller batch size of 24 sequence of 2048 tokens.]
-But for the 2-layer SSM the drop is far less significant. In fact, we have checked SSMs up to 16 layers and they cannot match the score of two layer attention only transoformer. This is in contrast to the loss, which is lower for SSMs. One can speculate that Selective SSM is better at approximating N-gram statistics, but worse at in-context learning. Can we try to understand why is this the case? 
+Several observations are in order. First,  we can see that an SSM-only model is already pretty solid at language modelling. Secondly, both the single-layer attention-only transformer and the SSM struggle with in-context learning. This is expected since we know that induction heads can only form in two-layer models [@elhage2021mathematical]. At the same time, the SSM has a lower loss.^[We use the same tokenizer and the same model size, with only the learning rate tuned for each model separately.]
+At two layers things become interesting. The transformer experiences a "phase transition" and the score quickly drops.^[Our plots agree very well with [@olsson2022context] except that the phase change happens earlier in training. We use a rather small vocab size of 16384 and perhaps much smaller batch size of 24 sequence of 2048 tokens.]
+But for the 2-layer SSM the drop is far less significant. In fact, we have checked SSMs up to 16 layers and they cannot match the score of the two-layer attention-only transoformer. This is in contrast to the loss, which is lower for SSMs. One can speculate that selective SSMs are better at approximating N-gram statistics, but worse at in-context learning. Can we try to understand why is this the case? 
 
 ### **Mathematical Formulation of SSM**
-Originally, the discovery of the induction heads became possible due to a neat mathematical formulation of transformers [@elhage2021mathematical]. Here we report our initial attempt to provide a similar formulation for the SSMs.
+Originally, the discovery of the induction heads became possible due to a neat mathematical formulation of transformers [@elhage2021mathematical]. Here we report our initial attempt to apply this formulation to SSMs.
 
 One difficulty that we immediately encounter is the presence of different dimensions in the model: the hidden dimension (in Mamba it is twice of the residual stream), the sequence length, and the state-space dimension. This makes it hard to distinguish between different multiplications. To make things as clear as possible, we will write all indices explicitly and use the Einstein summation convention. Furthermore, we will denote indices in such a way that it is clear what they mean.
 Namely, we will use letters $s, t, r$ for the sequence position, $i, j, k, l$ for the hidden dimension,^[Notice that Mamba expands the residual stream by a factor of two, so the hidden dimension is twice the embedding dimension.] and $\alpha, \beta$ for the state-space dimension. We will ignore the batch dimension since it could be trivially added.
@@ -338,7 +354,7 @@ where $A_{t\,s}$ are the attention scores which depend on all inputs, but have o
 $$
 y_{t\,i} = \text{softmax} \left( x_{s\, k} W^Q_{k\, \alpha}  W^K_{l\, \alpha} x_{t\, l} \right)\; W^O_{i\, \beta}\, W^V_{j\, \beta}\, x_{s\, j}.
 $$
-Notice that $ W^Q_{k\, \alpha}  W^K_{l\, \alpha}$ and $W^O_{i\, \beta}\, W^V_{j\, \beta}$ are low-rank matrices (here $\alpha$ goes from 1 to hidden_size/num_heads). We can rewrite the previous equation as^[See [@elhage2021mathematical], where OV and KQ compositions have been introduced.]
+Notice that $W^Q_{k\, \alpha} W^K_{l\, \alpha}$ and $W^O_{i\, \beta}\, W^V_{j\, \beta}$ are low-rank matrices (here $\alpha$ goes from 1 to hidden\_size/num\_heads). We can rewrite the previous equation as^[See [@elhage2021mathematical], where OV and KQ compositions have been introduced.]
 $$
 y_{t\,i} = \text{softmax} \left( x_{s\, k} W^{KQ}_{k\,l} x_{t\, l} \right)\; W^{OV}_{i\,j}\, x_{s\, j}.
 $${#eq-attention}
@@ -366,19 +382,19 @@ For example, $B_{t\, \alpha}(x) = W^B_{\alpha\, i} \, x_{t\, i}$ is a shorthand 
 ## Selective SSM
 Now, we are ready to take a deep breath and write the output of the SSM:
 $$
-y_{t\,i} = x_{t\,k} \, W_{\alpha \, k}^C \; \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\; W_{\alpha\,j}^B \,x_{s\,j}\; \Delta_{s\,i}(x)\, x_{s\,i}.
+y_{t\,i} = x_{t\,k} \, W_{\alpha \, k}^C \; \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\; W_{\alpha\, j}^B \,x_{s\,j}\; \Delta_{s\,i}(x)\, x_{s\,i}.
 $${#eq-ssm-attention}
 Let's rewrite this as
 $$
-y_{t\,i} = q_{t\, \alpha} \; g^{\alpha\beta}_{s\,t\,i}(x) \; k_{s\, \beta} \; v_{s\,i},
+y_{t\,i} = q_{t\, \alpha} \; g_{\alpha\, \beta\, s\,t\,i}(x) \; k_{s\, \beta} \; v_{s\,i},
 $${#eq-ssm-attention-short}
 where
 $$
 \begin{aligned}
 q_{t\, \alpha} &=  W_{\alpha \, k}^C\,x_{t\,k} ,\\
-k_{s\, \beta} &= W_{\alpha\,j}^B \,x_{s\,j} ,\\
+k_{s\, \beta} &= W_{\alpha\, j}^B \,x_{s\,j} ,\\
 v_{s\,i} &= \Delta_{s\,i}(x)\, x_{s\,i},\\
-g^{\alpha\beta}_{s\,t\,i}(x) &= \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\, \delta_{\alpha\beta}.
+g_{\alpha\, \beta\, s\,t\,i}(x) &= \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\, \delta_{\alpha\beta}.
 \end{aligned}
 $$
 :::
@@ -387,7 +403,7 @@ This looks very similar to attention!
 
 More specifically, the linear attention without softmax. Matrices $W^B$ and $W^C$ are the analogues of the query and the key matrices in the attention mechanism. They project  from the hidden dimension to the much smaller state space dimension. Notice that this is the feature of the *selective* SSM. In the usual SSMs $B$ and $C$ do not depend on $x$ so this analogy to keys and queries is lost.
 
-There are important differences though. First, instead of multiple attention heads with different projections, we have only one, but keys and queries are multiplied with a "metric" $g^{\alpha\beta}_{s\,t\,i}(x)$ which is different for every coordinate $i$ across the hidden dimension.^[Interestingly, the exponential depending on sequence positions of the source and destination tokens also appears in the case of the usual position embeddings [@tsai2019transformer], but in the usual transformers it doesn't depend on the token embeddings.]
+There are important differences though. First, instead of multiple attention heads with different projections, we have only one, but keys and queries are multiplied with a "metric" $g_{\alpha\, \beta\, s\,t\,i}(x)$ which is different for every coordinate $i$ across the hidden dimension.^[Interestingly, the exponential depending on sequence positions of the source and destination tokens also appears in the case of the usual position embeddings [@tsai2019transformer], but in the usual transformers it doesn't depend on the token embeddings.]
 So, in some sense, we have as many attention heads as there are hidden dimensions. 
 
 Secondly, the value is not just a linear transformation of the token embedding as in the usual attention mechanism @eq-attention. Instead, it is gated by the matrix $\Delta_{s\,i}(x)$, which in turn depends on the input.
