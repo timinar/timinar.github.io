@@ -94,7 +94,7 @@ plt.show(fig)
 ```
 
 
-So what about Mamba? We used [this](https://huggingface.co/state-spaces/mamba-790m) model. Here is the result:
+So what about Mamba? We used [this](https://huggingface.co/state-spaces/mamba-790m) model. And [this](https://github.com/jzhang38/LongMamba) [one](https://huggingface.co/PY007/LongMamba_16384_bs128_step400/tree/main). Here is the result:
 
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/mamba-random-tokens.png){fig-align="center" width=60% #fig-random-mamba} -->
@@ -106,10 +106,12 @@ import numpy as np
 
 qwen_loss = np.loadtxt('./data/losses_800_qwen.txt')
 mamba_loss = np.loadtxt('./data/losses_800_mamba.txt')
+longmamba_loss = np.loadtxt('./data/losses_800_longmamba.txt')
 
 fig = plt.figure()
 plt.plot(qwen_loss, label = 'Qwen1.5-0.5B')
 plt.plot(mamba_loss, label = 'Mamba-790m')
+plt.plot(longmamba_loss, label = 'LongMamba-2.8B', alpha=0.7)
 plt.xlabel('Token position')
 plt.ylabel('Per Token Loss')
 plt.legend()
@@ -128,10 +130,12 @@ import numpy as np
 
 qwen_loss = np.loadtxt('./data/losses_8k_qwen.txt')
 mamba_loss = np.loadtxt('./data/losses_8k_mamba.txt')
+longmamba_loss = np.loadtxt('./data/losses_8000_longmamba.txt')
 
 fig = plt.figure()
 plt.plot(qwen_loss, label = 'Qwen1.5-0.5B')
 plt.plot(mamba_loss, label = 'Mamba-790m')
+plt.plot(longmamba_loss, label = 'LongMamba-2.8B',alpha=0.7)
 plt.xlabel('Token position')
 plt.ylabel('Per Token Loss')
 plt.legend()
@@ -159,6 +163,7 @@ import numpy as np
 
 qwen_loss = np.loadtxt('./data/losses_stories_qwen.txt')
 mamba_loss = np.loadtxt('./data/losses_stories_mamba.txt')
+longmamba_loss = np.loadtxt('./data/losses_stories_longmamba.txt')
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))  
 ax1.plot(qwen_loss, label='Qwen 1.5-0.5B')
@@ -169,7 +174,9 @@ ax1.legend()
 ax1.set_title('Qwen Loss')
 
 
-ax2.plot(mamba_loss, label='Mamba-790M', color='tab:orange')
+
+ax2.plot(longmamba_loss, label='LongMamba-2.8B', color='tab:green')
+ax2.plot(mamba_loss, label='Mamba-790M', color='tab:orange', linestyle=':', alpha=0.7)
 ax2.set_ylim(1.5, 7)
 ax2.set_xlabel('Token position')
 ax2.set_ylabel('Per Token Loss')
@@ -363,7 +370,7 @@ $${#eq-attention}
 
 Now, after some index gymnastic, let's move to SSMs.
 The input to the SSM is dented $x_{s, i}$, the output is $y_{s, i}$. Notice that in  our formulation the hidden state never shows up.
-Here we list the parameters of the SSM:
+Here we list the parameters of the SSM:^[The definitions here match the actual code and agree with the paper up to the second (?) order. We also don't show $D$ here.]
 
 $$
 \begin{aligned}

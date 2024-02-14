@@ -204,13 +204,13 @@ window.Quarto = {
 <h1>DRAFT 2024-02-12</h1>
 <section id="introduction" class="level2">
 <h2 class="anchored" data-anchor-id="introduction"><strong>Introduction</strong></h2>
-<p>Mamba <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao 2023</a>)</span> is an architecture based on a Selective Structured State-Space model. Recently it has taken the community by storm – and for a good reason. It features linear complexity in the sequence length and outperforms transformers of the similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation <span class="citation" data-cites="ma2024u">(<a href="#ref-ma2024u" role="doc-biblioref">Ma, Li, and Wang 2024</a>)</span>. We are excited to see if Mamba could be used to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
+<p>Mamba <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao 2023</a>)</span> is an architecture based on a Selective Structured State-Space model. Recently it has taken the community by storm — and for a good reason. It features linear complexity in the sequence length and outperforms transformers of similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation <span class="citation" data-cites="ma2024u">(<a href="#ref-ma2024u" role="doc-biblioref">Ma, Li, and Wang 2024</a>)</span>. We are excited to see if Mamba could be used to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a></p>
 <p>Interestingly, the model design has been in part motivated by the mechanistic interpretability <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span> studies and specifically the idea of in-context learning and induction heads <span class="citation" data-cites="olsson2022context">(<a href="#ref-olsson2022context" role="doc-biblioref">Olsson et al. 2022</a>)</span>.</p>
 <p>So here we will take a look at the in-context learning in Mamba.</p>
 </section>
 <section id="in-context-learning" class="level2">
 <h2 class="anchored" data-anchor-id="in-context-learning"><strong>In-Context Learning</strong></h2>
-<p>By in-context learning we mean the ability of the model to learn during the inference time using the information from the context. This most clearly manifests itself as the decrease of the per-token loss as a function of the token position in the sequence, see Figure <a href="#fig-in-context" class="quarto-xref">Figure&nbsp;1</a>.</p>
+<p>By in-context learning we mean the ability of the model to learn during the inference time using the information from the context. This most clearly manifests itself as the decrease of the per-token loss as a function of the token position in the sequence, see <a href="#fig-in-context" class="quarto-xref">Figure&nbsp;1</a>.</p>
 <!-- placeholder: create a better plot
 ![Loss per token as a function of token position, averaged over 200 sequences. Children stories.](fig/incontext-loss.png){fig-align="center" width=60% #fig-in-context} -->
 <div id="cell-fig-in-context" class="cell" data-execution_count="1">
@@ -221,19 +221,19 @@ window.Quarto = {
 <img src="index_files/figure-html/fig-in-context-output-1.png" width="576" height="429" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-in-context-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: Loss per token as a function of token position, averaged over 200 sequences. Children stories dataset.
+Figure&nbsp;1: Loss per token as a function of the token position, averaged over 200 sequences. Children stories dataset.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>Induction heads are believed to be central to the in-context learning. So what are they? Induction heads are circuits that allow model to predict [B] after [A] if the pair [A][B] has already appeared in the context.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> Induction heads are already present in two layer attention only transformers (but not in single layer ones).</p>
+<p>Induction heads are believed to be central to in-context learning. So what are they? Induction heads are circuits that allow the model to predict [B] after [A] if the pair [A][B] has already appeared in the context.<a href="#fn2" class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a> Induction heads are already present in two layer attention-only transformers (but not in single layer ones).</p>
 <!-- add predictions html-->
 <p>Mamba and the predecessor model H3 <span class="citation" data-cites="fu2022hungry">(<a href="#ref-fu2022hungry" role="doc-biblioref">Fu et al. 2022</a>)</span> have been designed with the idea of induction heads in mind.</p>
 </section>
 <section id="mamba-phenomenological-study" class="level2">
 <h2 class="anchored" data-anchor-id="mamba-phenomenological-study"><strong>Mamba: phenomenological study</strong></h2>
-<p>How can we check the in-context learning ability of Mamba? One simple test is to feed the model with garbage repeated twice. Quite amusingly, transformers are able to learn the pattern and predict the second half of the sequence with high accuracy, like in <a href="#fig-random-qwen" class="quarto-xref">Figure&nbsp;2</a>.</p>
+<p>How can we check the in-context learning ability of Mamba? One simple test is to feed the model random garbage, repeated twice. Quite amusingly, transformers are able to learn the pattern and predict the second half of the sequence with high accuracy, like in <a href="#fig-random-qwen" class="quarto-xref">Figure&nbsp;2</a>.</p>
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/qwen-random-tokens.png){fig-align="center" width=60% #fig-random-qwen} -->
 <div id="cell-fig-random-qwen" class="cell" data-execution_count="2">
@@ -244,13 +244,13 @@ Figure&nbsp;1: Loss per token as a function of token position, averaged over 200
 <img src="index_files/figure-html/fig-random-qwen-output-1.png" width="585" height="429" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-random-qwen-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;2: Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
+Figure&nbsp;2: Loss per token as a function of the token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>So what about mamba? We used <a href="https://huggingface.co/state-spaces/mamba-790m">this</a> model. Here is the result:</p>
+<p>So what about Mamba? We used <a href="https://huggingface.co/state-spaces/mamba-790m">this</a> model. And <a href="https://github.com/jzhang38/LongMamba">this</a> <a href="https://huggingface.co/PY007/LongMamba_16384_bs128_step400/tree/main">one</a>. Here is the result:</p>
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/mamba-random-tokens.png){fig-align="center" width=60% #fig-random-mamba} -->
 <div id="cell-fig-random-mamba" class="cell" data-execution_count="3">
@@ -261,13 +261,13 @@ Figure&nbsp;2: Loss per token as a function of token position, averaged over 200
 <img src="index_files/figure-html/fig-random-mamba-output-1.png" width="585" height="429" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-random-mamba-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;3: Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
+Figure&nbsp;3: Loss per token as a function of the token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>Ok, what about longer contexts? The mamba should be able to handle really long sequences, right?</p>
+<p>Ok, what about longer contexts? Mamba should be able to handle really long sequences, right?</p>
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/mamba-random-tokens-long.jpeg){fig-align="center" width=60% #fig-random-mamba-long} -->
 <div id="cell-fig-random-mamba-long" class="cell" data-execution_count="4">
@@ -278,13 +278,13 @@ Figure&nbsp;3: Loss per token as a function of token position, averaged over 200
 <img src="index_files/figure-html/fig-random-mamba-long-output-1.png" width="585" height="429" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-random-mamba-long-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;4: Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
+Figure&nbsp;4: Loss per token as a function of the token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.
 </figcaption>
 </figure>
 </div>
 </div>
 </div>
-<p>Oops! So, we can see that a small transformer deals with this easily, but Mamba struggles. Notice that this is a very artificial test though. The data is completely out of distribution.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> Maybe the model learns N-gram statistics too well and the induction heads cannot change the predictions.</p>
+<p>Oops! So, we can see that a small transformer deals with this easily, but Mamba struggles. Notice that this is a very artificial test, though. The data is completely out of distribution.<a href="#fn3" class="footnote-ref" id="fnref3" role="doc-noteref"><sup>3</sup></a> Maybe the model learns N-gram statistics too well and the induction heads cannot change the predictions.</p>
 <p>So what about normal texts?</p>
 <!-- placeholder: create a better plot-->
 <!-- ::: {#fig-losses layout-ncol=2}
@@ -303,7 +303,7 @@ Loss per token as a function of token position, averaged over 200 sequences. Chi
 <img src="index_files/figure-html/fig-losses-output-1.png" width="756" height="374" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-losses-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;5: Loss per token as a function of token position, averaged over 200 sequences. Children stories dataset.
+Figure&nbsp;5: Loss per token as a function of the token position, averaged over 200 sequences. Children stories dataset.
 </figcaption>
 </figure>
 </div>
@@ -326,7 +326,7 @@ Score and eval loss.
 <div id="fig-scores" class="quarto-figure quarto-figure-center quarto-float anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-scores-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-scores-output-1.png" width="758" height="374" class="figure-img">
+<img src="index_files/figure-html/fig-scores-output-1.png" width="765" height="508" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scores-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;6: In-context learning score and eval loss for Mamba and attention-only transformers.
@@ -341,8 +341,8 @@ Figure&nbsp;6: In-context learning score and eval loss for Mamba and attention-o
 <h2 class="anchored" data-anchor-id="understanding-selective-ssms"><strong>Understanding Selective SSMs</strong></h2>
 <section id="preliminaries" class="level3">
 <h3 class="anchored" data-anchor-id="preliminaries"><strong>Preliminaries</strong></h3>
-<p>Mamba is more intricate than a transformer since it involves a selective state space model and gating, see <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao 2023</a>)</span>. It is known, however, that already attention-only transformers exhibit interesting behavior <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>. Can we analogously consider a model based on the SSM, without convolutions and gating?</p>
-<p>We have trained several models on PG-19 dataset <span class="citation" data-cites="raecompressive2019">(<a href="#ref-raecompressive2019" role="doc-biblioref">Rae et al. 2019</a>)</span>. Those included: single layer and two layer transformers with RoPE position encoding, Mamba, and SSM-only models. Mamba and Transformer training is shown in figure <a href="#fig-scores" class="quarto-xref">Figure&nbsp;6</a>, while SSMs and transformers are shown in figure <a href="#fig-scores-ssm" class="quarto-xref">Figure&nbsp;7</a>.</p>
+<p>Mamba is more intricate than a transformer since it involves a selective state space model and gating, see <span class="citation" data-cites="gu2023mamba">(<a href="#ref-gu2023mamba" role="doc-biblioref">Gu and Dao 2023</a>)</span>. It is known, however, that attention-only transformers already exhibit interesting behavior <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>. Can we, analogously, consider a model based on the SSM only, without convolutions and gating?</p>
+<p>We have trained several models on PG-19 dataset <span class="citation" data-cites="raecompressive2019">(<a href="#ref-raecompressive2019" role="doc-biblioref">Rae et al. 2019</a>)</span>. Those included: single-layer and two-layer attention-only transformers with rotary position encoding (RoPE), Mamba, and SSM-only models. The training of Mamba and attention-only transformers is shown in figure <a href="#fig-scores" class="quarto-xref">Figure&nbsp;6</a>, while SSM-only models and attention-only transformers are compared in figure <a href="#fig-scores-ssm" class="quarto-xref">Figure&nbsp;7</a>.</p>
 <!-- placeholder: create a better plot-->
 <!-- ::: {#fig-scores-ssm layout-ncol=2}
 
@@ -357,7 +357,7 @@ In-context learning score and eval loss for SSMs and attention-only transformers
 <div id="fig-scores-ssm" class="quarto-figure quarto-figure-center quarto-float anchored">
 <figure class="quarto-float quarto-float-fig figure">
 <div aria-describedby="fig-scores-ssm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-<img src="index_files/figure-html/fig-scores-ssm-output-1.png" width="758" height="374" class="figure-img">
+<img src="index_files/figure-html/fig-scores-ssm-output-1.png" width="765" height="508" class="figure-img">
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-scores-ssm-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 Figure&nbsp;7: In-context learning score and eval loss for SSMs and attention-only transformers.
@@ -366,11 +366,11 @@ Figure&nbsp;7: In-context learning score and eval loss for SSMs and attention-on
 </div>
 </div>
 </div>
-<p>Several observations are in order. First, we can see that an SSM only model is already pretty solid in language modelling. Secondly, both single layer attention-only transformer and SSM struggle with in-context learning. This is expected since we know that induction heads can only form in two-layer models <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>. At the same time, SSM has lower loss.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> At two layers things become interesting. The transformer experience a “phase transition” and the score quickly drops.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> But for the 2-layer SSM the drop is far less significant. In fact, we have checked SSMs up to 16 layers and they cannot match the score of two layer attention only transoformer. This is in contrast to the loss, which is lower for SSMs. One can speculate that Selective SSM is better at approximating N-gram statistics, but worse at in-context learning. Can we try to understand why is this the case?</p>
+<p>Several observations are in order. First, we can see that an SSM-only model is already pretty solid at language modelling. Secondly, both the single-layer attention-only transformer and the SSM struggle with in-context learning. This is expected since we know that induction heads can only form in two-layer models <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>. At the same time, the SSM has a lower loss.<a href="#fn4" class="footnote-ref" id="fnref4" role="doc-noteref"><sup>4</sup></a> At two layers things become interesting. The transformer experiences a “phase transition” and the score quickly drops.<a href="#fn5" class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a> But for the 2-layer SSM the drop is far less significant. In fact, we have checked SSMs up to 16 layers and they cannot match the score of the two-layer attention-only transoformer. This is in contrast to the loss, which is lower for SSMs. One can speculate that selective SSMs are better at approximating N-gram statistics, but worse at in-context learning. Can we try to understand why is this the case?</p>
 </section>
 <section id="mathematical-formulation-of-ssm" class="level3">
 <h3 class="anchored" data-anchor-id="mathematical-formulation-of-ssm"><strong>Mathematical Formulation of SSM</strong></h3>
-<p>Originally, the discovery of the induction heads became possible due to a neat mathematical formulation of transformers <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>. Here we report our initial attempt to provide a similar formulation for the SSMs.</p>
+<p>Originally, the discovery of the induction heads became possible due to a neat mathematical formulation of transformers <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>. Here we report our initial attempt to apply this formulation to SSMs.</p>
 <p>One difficulty that we immediately encounter is the presence of different dimensions in the model: the hidden dimension (in Mamba it is twice of the residual stream), the sequence length, and the state-space dimension. This makes it hard to distinguish between different multiplications. To make things as clear as possible, we will write all indices explicitly and use the Einstein summation convention. Furthermore, we will denote indices in such a way that it is clear what they mean. Namely, we will use letters <span class="math inline">\(s, t, r\)</span> for the sequence position, <span class="math inline">\(i, j, k, l\)</span> for the hidden dimension,<a href="#fn6" class="footnote-ref" id="fnref6" role="doc-noteref"><sup>6</sup></a> and <span class="math inline">\(\alpha, \beta\)</span> for the state-space dimension. We will ignore the batch dimension since it could be trivially added.</p>
 <div class="callout callout-style-default callout-tip callout-titled">
 <div class="callout-header d-flex align-content-center">
@@ -386,12 +386,12 @@ The usual attention
 y_{t\,i} = A_{t\,s}(x) \, v_{s\,i},
 \]</span> where <span class="math inline">\(A_{t\,s}\)</span> are the attention scores which depend on all inputs, but have only the sequence indices. Notice that we sum over the repeated indices. Writing this equation explicitly we have <span class="math display">\[
 y_{t\,i} = \text{softmax} \left( x_{s\, k} W^Q_{k\, \alpha}  W^K_{l\, \alpha} x_{t\, l} \right)\; W^O_{i\, \beta}\, W^V_{j\, \beta}\, x_{s\, j}.
-\]</span> Notice that $ W^Q_{k, } W^K_{l, }$ and <span class="math inline">\(W^O_{i\, \beta}\, W^V_{j\, \beta}\)</span> are low-rank matrices (here <span class="math inline">\(\alpha\)</span> goes from 1 to hidden_size/num_heads). We can rewrite the previous equation as<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> <span id="eq-attention"><span class="math display">\[
+\]</span> Notice that <span class="math inline">\(W^Q_{k\, \alpha} W^K_{l\, \alpha}\)</span> and <span class="math inline">\(W^O_{i\, \beta}\, W^V_{j\, \beta}\)</span> are low-rank matrices (here <span class="math inline">\(\alpha\)</span> goes from 1 to hidden_size/num_heads). We can rewrite the previous equation as<a href="#fn7" class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> <span id="eq-attention"><span class="math display">\[
 y_{t\,i} = \text{softmax} \left( x_{s\, k} W^{KQ}_{k\,l} x_{t\, l} \right)\; W^{OV}_{i\,j}\, x_{s\, j}.
 \tag{1}\]</span></span></p>
 </div>
 </div>
-<p>Now, after some index gymnastic, let’s move to SSMs. The input to the SSM is dented <span class="math inline">\(x_{s, i}\)</span>, the output is <span class="math inline">\(y_{s, i}\)</span>. Notice that in our formulation the hidden state never shows up. Here we list the parameters of the SSM:</p>
+<p>Now, after some index gymnastic, let’s move to SSMs. The input to the SSM is dented <span class="math inline">\(x_{s, i}\)</span>, the output is <span class="math inline">\(y_{s, i}\)</span>. Notice that in our formulation the hidden state never shows up. Here we list the parameters of the SSM:<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a></p>
 <p><span id="eq-eq-ssm"><span class="math display">\[
 \begin{aligned}
 \Delta_{t\, i} (x) &amp;= \text{softplus}(W^\Delta_{i\, j}\, x_{t\, j}),\\
@@ -412,22 +412,22 @@ Selective SSM
 </div>
 <div class="callout-body-container callout-body">
 <p>Now, we are ready to take a deep breath and write the output of the SSM: <span id="eq-ssm-attention"><span class="math display">\[
-y_{t\,i} = x_{t\,k} \, W_{\alpha \, k}^C \; \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\; W_{\alpha\,j}^B \,x_{s\,j}\; \Delta_{s\,i}(x)\, x_{s\,i}.
+y_{t\,i} = x_{t\,k} \, W_{\alpha \, k}^C \; \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\; W_{\alpha\, j}^B \,x_{s\,j}\; \Delta_{s\,i}(x)\, x_{s\,i}.
 \tag{3}\]</span></span> Let’s rewrite this as <span id="eq-ssm-attention-short"><span class="math display">\[
-y_{t\,i} = q_{t\, \alpha} \; g^{\alpha\beta}_{s\,t\,i}(x) \; k_{s\, \beta} \; v_{s\,i},
+y_{t\,i} = q_{t\, \alpha} \; g_{\alpha\, \beta\, s\,t\,i}(x) \; k_{s\, \beta} \; v_{s\,i},
 \tag{4}\]</span></span> where <span class="math display">\[
 \begin{aligned}
 q_{t\, \alpha} &amp;=  W_{\alpha \, k}^C\,x_{t\,k} ,\\
-k_{s\, \beta} &amp;= W_{\alpha\,j}^B \,x_{s\,j} ,\\
+k_{s\, \beta} &amp;= W_{\alpha\, j}^B \,x_{s\,j} ,\\
 v_{s\,i} &amp;= \Delta_{s\,i}(x)\, x_{s\,i},\\
-g^{\alpha\beta}_{s\,t\,i}(x) &amp;= \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\, \delta_{\alpha\beta}.
+g_{\alpha\, \beta\, s\,t\,i}(x) &amp;= \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\, \delta_{\alpha\beta}.
 \end{aligned}
 \]</span></p>
 </div>
 </div>
 <p>This looks very similar to attention!</p>
 <p>More specifically, the linear attention without softmax. Matrices <span class="math inline">\(W^B\)</span> and <span class="math inline">\(W^C\)</span> are the analogues of the query and the key matrices in the attention mechanism. They project from the hidden dimension to the much smaller state space dimension. Notice that this is the feature of the <em>selective</em> SSM. In the usual SSMs <span class="math inline">\(B\)</span> and <span class="math inline">\(C\)</span> do not depend on <span class="math inline">\(x\)</span> so this analogy to keys and queries is lost.</p>
-<p>There are important differences though. First, instead of multiple attention heads with different projections, we have only one, but keys and queries are multiplied with a “metric” <span class="math inline">\(g^{\alpha\beta}_{s\,t\,i}(x)\)</span> which is different for every coordinate <span class="math inline">\(i\)</span> across the hidden dimension.<a href="#fn8" class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a> So, in some sense, we have as many attention heads as there are hidden dimensions.</p>
+<p>There are important differences though. First, instead of multiple attention heads with different projections, we have only one, but keys and queries are multiplied with a “metric” <span class="math inline">\(g_{\alpha\, \beta\, s\,t\,i}(x)\)</span> which is different for every coordinate <span class="math inline">\(i\)</span> across the hidden dimension.<a href="#fn9" class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a> So, in some sense, we have as many attention heads as there are hidden dimensions.</p>
 <p>Secondly, the value is not just a linear transformation of the token embedding as in the usual attention mechanism <a href="#eq-attention" class="quarto-xref">Equation&nbsp;1</a>. Instead, it is gated by the matrix <span class="math inline">\(\Delta_{s\,i}(x)\)</span>, which in turn depends on the input.</p>
 <p>Those differences might be crucial. To understand why, let’s recall that there are exponentially many almost orthogonal vectors in high dimensions, see e.g.~<span class="citation" data-cites="Tao2013CheapKL">(<a href="#ref-Tao2013CheapKL" role="doc-biblioref">Tao 2013</a>)</span>. So if we perform a linear transformation of the input, like in <a href="#eq-attention" class="quarto-xref">Equation&nbsp;1</a>, we get a new vector that could live in many of different, almost orthogonal subspaces. In the case of the Selective SSM, every “attention head” only writes a single coordinate. Of course, there is a dependence on the other coordinates via <span class="math inline">\(\Delta\)</span>, but due to the softplus function, it serves rather as a <em>gate</em> than as a linear transformation. Therefore, one can speculate that the SSM has access to as many orthogonal subspaces as there are hidden dimensions, whereas the usual attention can utilize exponentially more. This might seem as a plausible explanation of why we do not observe the phase transition in the SSMs. However, we need to be very cautious here. <a href="#eq-ssm-attention" class="quarto-xref">Equation&nbsp;3</a> is very non-linear in <span class="math inline">\(x\)</span> so our intuition from the usual attention might be misleading.</p>
 
@@ -468,12 +468,13 @@ Tsai, Yao-Hung Hubert, Shaojie Bai, Makoto Yamada, Louis-Philippe Morency, and R
 <ol>
 <li id="fn1"><p>This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photodetectors that collect the data. Transformers are in general well suited for this task. But their quadratic dependence on the input length doesn’t allow to study the brightest events that have hundreds of thousands of pulses.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2"><p>Think of [A] being “Harry” and [B] being “Potter”. If “Harry Potter” was present in the context already, the model will predict “Potter” after “Harry” with high probability.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn3"><p>Garbage in – garbage out. It is actually really impressive that transformers deal with this so easily<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn4"><p>We use the same tokenizer and the same model size with only the learning rate tuned for each model separately.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>Garbage in — garbage out. It is actually really impressive that transformers deal with this so easily.<a href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>We use the same tokenizer and the same model size, with only the learning rate tuned for each model separately.<a href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn5"><p>Our plots agree very well with <span class="citation" data-cites="olsson2022context">(<a href="#ref-olsson2022context" role="doc-biblioref">Olsson et al. 2022</a>)</span> except that the phase change happens earlier in training. We use a rather small vocab size of 16384 and perhaps much smaller batch size of 24 sequence of 2048 tokens.<a href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn6"><p>Notice that Mamba expands the residual stream by a factor of two, so the hidden dimension is twice the embedding dimension.<a href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn7"><p>See <span class="citation" data-cites="elhage2021mathematical">(<a href="#ref-elhage2021mathematical" role="doc-biblioref">Elhage et al. 2021</a>)</span>, where OV and KQ compositions have been introduced.<a href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
-<li id="fn8"><p>Interestingly, the exponential depending on sequence positions of the source and destination tokens also appears in the case of the usual position embeddings <span class="citation" data-cites="tsai2019transformer">(<a href="#ref-tsai2019transformer" role="doc-biblioref">Tsai et al. 2019</a>)</span>, but in the usual transformers it doesn’t depend on the token embeddings.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>The definitions here match the actual code and agree with the paper up to the second (?) order. We also don’t show <span class="math inline">\(D\)</span> here.<a href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p>Interestingly, the exponential depending on sequence positions of the source and destination tokens also appears in the case of the usual position embeddings <span class="citation" data-cites="tsai2019transformer">(<a href="#ref-tsai2019transformer" role="doc-biblioref">Tsai et al. 2019</a>)</span>, but in the usual transformers it doesn’t depend on the token embeddings.<a href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section></div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
