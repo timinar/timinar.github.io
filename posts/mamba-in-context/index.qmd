@@ -4,7 +4,7 @@ title: "Mamba and in-context learing: initial look"
 author: 
   - "Inar Timiryasov"
   - "Jean-Loup Tastet"
-date: "2024-02-10"
+date: "2024-02-14"
 bibliography: SSSM_refs.bib
 draft: true
 execute:
@@ -26,12 +26,22 @@ execute:
 - cite the recent paper with vocab size = 40
 -->
 
-# DRAFT 2024-02-12
+<!-- Global Matplotlib setup -->
+```{python}
+import matplotlib.pyplot as plt
+theme_background_color = (252 / 255, 252 / 255, 252 / 255) # Match light color theme
+plt.rcParams['figure.facecolor'] = theme_background_color
+plt.rcParams['axes.facecolor'] = theme_background_color
+#%config InlineBackend.figure_formats = ['svg'] # For vector graphics (sharper, lighter but possibly slower to render for busy plots)
+plt.rcParams['figure.dpi'] = 150 # For raster graphics (less sharp, heavier, trivial to render)
+```
 
-## **Introduction**
+# DRAFT 2024-02-14
+
+## Introduction
 
 Mamba [@gu2023mamba] is an architecture based on a Selective Structured State-Space model.
-Recently it has taken the community by storm --- and for a good reason. It features linear complexity in the sequence length and outperforms transformers of similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation [@ma2024u]. 
+Recently it has taken the community by storm --- and for good reason. It features linear complexity in the sequence length and outperforms transformers of similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation [@ma2024u]. 
 We are now applying Mamba to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.^[This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photodetectors that collect the data.
 Transformers are in general well suited for this task. But their quadratic dependence on the input length doesn't allow to study the brightest events that have hundreds of thousands of pulses.]
 
@@ -41,7 +51,7 @@ So here we wanted take a look at the in-context learning in Mamba. Meanwhile, th
 
 
 
-## **In-Context Learning**
+## In-Context Learning
 
 By in-context learning we mean the ability of the model to learn during the inference time using the information from the context. This most clearly manifests itself as the decrease of the per-token loss as a function of the token position in the sequence, see @fig-in-context.
 
@@ -74,7 +84,7 @@ Mamba and the predecessor model H3 [@fu2022hungry] have been designed with the i
 
 
 
-## **Mamba: phenomenological study**
+## Mamba: phenomenological study
 How can we check the in-context learning ability of Mamba?
 One simple test is to feed the model random garbage, repeated twice. Quite amusingly, transformers are able to learn the pattern and predict the second half of the sequence with high accuracy, like in @fig-random-qwen. We used the smallest [Qwen-1.5](https://huggingface.co/collections/Qwen/qwen15-65c0a2f577b1ecb76d786524) model mainly since it has long context window which will be used below. Even GPT-2 124M is perfectly capable of solving this task as far as the sequence fits into the context length.
 
@@ -169,7 +179,7 @@ qwen_loss = np.loadtxt('./data/losses_stories_qwen.txt')
 mamba_loss = np.loadtxt('./data/losses_stories_mamba.txt')
 longmamba_loss = np.loadtxt('./data/losses_stories_longmamba.txt')
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4))  
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 4), sharey=True)  
 ax1.plot(qwen_loss, label='Qwen 1.5-0.5B')
 ax1.set_ylim(1.5, 7)
 ax1.set_xlabel('Token position')
@@ -183,7 +193,7 @@ ax2.plot(longmamba_loss, label='LongMamba-2.8B', color='tab:green')
 ax2.plot(mamba_loss, label='Mamba-790M', color='tab:orange', linestyle=':', alpha=0.7)
 ax2.set_ylim(1.5, 7)
 ax2.set_xlabel('Token position')
-ax2.set_ylabel('Per Token Loss')
+#ax2.set_ylabel('Per Token Loss')
 ax2.legend()
 ax2.set_title('Mamba Loss')
 
@@ -200,15 +210,28 @@ TODO:
 
 * discuss the observations by @olsson2022context
 
-* introduce the score
+* ~~introduce the score~~
 
 * Describe the models and the dataset.
 
 * explain why separating ssm (see the next subsection)
 
-### **In-Context Learning Score**
+### In-Context Learning Score
 
-Introduce the score...
+In order to follow the evolution of the in-context learning capabilities of the model as it trains, we follow @olsson2022context and introduce the so-called in-context learning score, define loosely as the difference between the mean per-token loss in late and early context. The precise definition that we use is:
+
+```{python}
+#| echo: true
+def loss_decrease_score(losses):
+    beg_sl = slice(30, 60)
+    end_sl = slice(990, 1023)
+    beginning_mean = losses[:, beg_sl].mean(axis=1)
+    end_mean = losses[:, end_sl].mean(axis=1)
+    scores = end_mean - beginning_mean
+    return scores
+```
+
+The more negative this score is, the better the model is at leveraging the information present in its context when predicting the next tokens.
 
 <!-- placeholder: create a better plot-->
 <!-- ::: {#fig-scores layout-ncol=2}
@@ -240,19 +263,11 @@ styles = [
 eval_losses = [np.loadtxt(f'./data/training/eval_losses_{model}.txt') for model in models]
 per_token_losses = [np.loadtxt(f'./data/training/per_token_losses_{model}.txt') for model in models]
 
-def loss_decrease_score(losses):
-    beg_sl = slice(30, 60)
-    end_sl = slice(990, 1023)
-    beginning_mean = losses[:, beg_sl].mean(axis=1)
-    end_mean = losses[:, end_sl].mean(axis=1)
-    scores = end_mean - beginning_mean
-    return scores
-
 scores = [loss_decrease_score(loss) for loss in per_token_losses]
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 6)) 
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 6), sharex=True) 
 
-fig.subplots_adjust(hspace=0.25)
+fig.subplots_adjust(hspace=0.15)
 
 for model, score, sty in zip(labels, scores, styles):
     ax1.plot(elapsed_tokens, score, label=model, **sty)
@@ -270,7 +285,7 @@ ax1.set_ylim(-0.25, 0.0)
 ax2.set_xlabel('Elapsed tokens')
 ax2.set_ylabel('Eval Loss')
 ax2.legend()
-ax2.set_ylim(3.5, 5.5)
+ax2.set_ylim(3.5, 5.)
 #ax2.set_title('Eval Loss Over Training')
 
 
@@ -281,7 +296,7 @@ plt.show()
 
 
 
-## ** SSSM-only models**
+## SSSM-only models
 
 
 Mamba is more intricate than a transformer since it involves a selective state space model and gating, see [@gu2023mamba].
@@ -319,20 +334,12 @@ styles = [
 ]
 eval_losses = [np.loadtxt(f'./data/training/eval_losses_{model}.txt') for model in models]
 per_token_losses = [np.loadtxt(f'./data/training/per_token_losses_{model}.txt') for model in models]
-
-def loss_decrease_score(losses):
-    beg_sl = slice(30, 60)
-    end_sl = slice(990, 1023)
-    beginning_mean = losses[:, beg_sl].mean(axis=1)
-    end_mean = losses[:, end_sl].mean(axis=1)
-    scores = end_mean - beginning_mean
-    return scores
-
+ 
 scores = [loss_decrease_score(loss) for loss in per_token_losses]
 
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 6)) 
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(9, 6), sharex=True)
 
-fig.subplots_adjust(hspace=0.25)
+fig.subplots_adjust(hspace=0.15)
 
 for model, score, sty in zip(labels, scores, styles):
     ax1.plot(elapsed_tokens, score, label=model, **sty)
@@ -350,7 +357,7 @@ ax1.set_ylim(-0.25, 0.0)
 ax2.set_xlabel('Elapsed tokens')
 ax2.set_ylabel('Eval Loss')
 ax2.legend()
-ax2.set_ylim(3.5, 5.5)
+ax2.set_ylim(3.5, 5.)
 #ax2.set_title('Eval Loss Over Training')
 
 
