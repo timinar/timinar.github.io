@@ -1,0 +1,90 @@
+---
+title: "Mathematical Formulation of Selective SSM"
+# description: "Post description"
+author: 
+  - "Inar Timiryasov"
+  - "Jean-Loup Tastet"
+date: "2024-02-14"
+bibliography: SSSM_refs.bib
+draft: true
+execute:
+  echo: false
+---
+
+# DRAFT 2024-02-12
+
+
+
+# **Mathematical Formulation of SSM**
+Originally, the discovery of the induction heads became possible due to a neat mathematical formulation of transformers [@elhage2021mathematical]. Here we report our initial attempt to apply this formulation to SSMs.
+
+One difficulty that we immediately encounter is the presence of different dimensions in the model: the hidden dimension (in Mamba it is twice of the residual stream), the sequence length, and the state-space dimension. This makes it hard to distinguish between different multiplications. To make things as clear as possible, we will write all indices explicitly and use the Einstein summation convention. Furthermore, we will denote indices in such a way that it is clear what they mean.
+Namely, we will use letters $s, t, r$ for the sequence position, $i, j, k, l$ for the hidden dimension,^[Notice that Mamba expands the residual stream by a factor of two, so the hidden dimension is twice the embedding dimension.] and $\alpha, \beta$ for the state-space dimension. We will ignore the batch dimension since it could be trivially added.
+
+::: {.callout-tip}
+## The usual attention
+To warm up, let's start with the usual transformer.
+The output of one attention head can be written as
+$$
+y_{t\,i} = A_{t\,s}(x) \, v_{s\,i},
+$$
+where $A_{t\,s}$ are the attention scores which depend on all inputs, but have only the sequence indices. Notice that we sum over the repeated indices. Writing this equation explicitly we have
+$$
+y_{t\,i} = \text{softmax} \left( x_{s\, k} W^Q_{k\, \alpha}  W^K_{l\, \alpha} x_{t\, l} \right)\; W^O_{i\, \beta}\, W^V_{j\, \beta}\, x_{s\, j}.
+$$
+Notice that $W^Q_{k\, \alpha} W^K_{l\, \alpha}$ and $W^O_{i\, \beta}\, W^V_{j\, \beta}$ are low-rank matrices (here $\alpha$ goes from 1 to hidden\_size/num\_heads). We can rewrite the previous equation as^[See [@elhage2021mathematical], where OV and KQ compositions have been introduced.]
+$$
+y_{t\,i} = \text{softmax} \left( x_{s\, k} W^{KQ}_{k\,l} x_{t\, l} \right)\; W^{OV}_{i\,j}\, x_{s\, j}.
+$${#eq-attention}
+:::
+
+
+Now, after some index gymnastic, let's move to SSMs.
+The input to the SSM is dented $x_{s, i}$, the output is $y_{s, i}$. Notice that in  our formulation the hidden state never shows up.
+Here we list the parameters of the SSM:^[The definitions here match the actual code and agree with the paper up to the second (?) order. We also don't show $D$ here.]
+
+$$
+\begin{aligned}
+\Delta_{t\, i} (x) &= \text{softplus}(W^\Delta_{i\, j}\, x_{t\, j}),\\
+B_{t\, \alpha}(x) &= W^B_{\alpha\, i} \, x_{t\, i},\\
+C_{t\, \alpha}(x) &= W^C_{\alpha\, i} \, x_{t\, i},\\
+\bar{A}_{t\,i\,\alpha}(x) &= \exp \left(\Delta_{t\, i}(x)\, A_{i\, \alpha}\right),\\
+\bar{B}_{t\,i\,\alpha}(x) &= \Delta_{t\, i}(x) B_{t\, \alpha}(x).\\
+\end{aligned}
+$${#eq-eq-ssm}
+We sum over the dummy indices. By dummy indices we mean the indices that appear twice on *one side of the euation*.
+For example, $B_{t\, \alpha}(x) = W^B_{\alpha\, i} \, x_{t\, i}$ is a shorthand for  $B_{t\, \alpha}(x) = \sum_i W^B_{\alpha\, i} \, x_{t\, i}$. In matrix notations, we would write it as $B = X\, \left( W^B \right)^T$. But notice that there is no sum over $i$ and $t$ in  $\bar{A}_{t\,i\,\alpha}(x) = \exp \left(\Delta_{t\, i}(x) \cdot A_{i\, \alpha}\right)$ since $i$ and $t$ appear on both the left and the right hand side of the equation. This is precisely the convention of the `torch.einsum` function.
+
+
+::: {.callout-important}
+## Selective SSM
+Now, we are ready to take a deep breath and write the output of the SSM:
+$$
+y_{t\,i} = x_{t\,k} \, W_{\alpha \, k}^C \; \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\; W_{\alpha\, j}^B \,x_{s\,j}\; \Delta_{s\,i}(x)\, x_{s\,i}.
+$${#eq-ssm-attention}
+Let's rewrite this as
+$$
+y_{t\,i} = q_{t\, \alpha} \; g_{\alpha\, \beta\, s\,t\,i}(x) \; k_{s\, \beta} \; v_{s\,i},
+$${#eq-ssm-attention-short}
+where
+$$
+\begin{aligned}
+q_{t\, \alpha} &=  W_{\alpha \, k}^C\,x_{t\,k} ,\\
+k_{s\, \beta} &= W_{\alpha\, j}^B \,x_{s\,j} ,\\
+v_{s\,i} &= \Delta_{s\,i}(x)\, x_{s\,i},\\
+g_{\alpha\, \beta\, s\,t\,i}(x) &= \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\, \delta_{\alpha\beta}.
+\end{aligned}
+$$
+:::
+This looks very similar to attention! 
+
+
+More specifically, the linear attention without softmax. Matrices $W^B$ and $W^C$ are the analogues of the query and the key matrices in the attention mechanism. They project  from the hidden dimension to the much smaller state space dimension. Notice that this is the feature of the *selective* SSM. In the usual SSMs $B$ and $C$ do not depend on $x$ so this analogy to keys and queries is lost.
+
+There are important differences though. First, instead of multiple attention heads with different projections, we have only one, but keys and queries are multiplied with a "metric" $g_{\alpha\, \beta\, s\,t\,i}(x)$ which is different for every coordinate $i$ across the hidden dimension.^[Interestingly, the exponential depending on sequence positions of the source and destination tokens also appears in the case of the usual position embeddings [@tsai2019transformer], but in the usual transformers it doesn't depend on the token embeddings.]
+So, in some sense, we have as many attention heads as there are hidden dimensions. 
+
+Secondly, the value is not just a linear transformation of the token embedding as in the usual attention mechanism @eq-attention. Instead, it is gated by the matrix $\Delta_{s\,i}(x)$, which in turn depends on the input.
+
+Those differences might be crucial. To understand why, let's recall that there are exponentially many almost orthogonal vectors in high dimensions, see e.g.~[@Tao2013CheapKL]. So if we perform a linear transformation of the input, like in @eq-attention, we get a new vector that could live in many of different, almost orthogonal subspaces. In the case of the Selective SSM, every "attention head" only writes a single coordinate. Of course, there is a dependence on the other coordinates via $\Delta$, but due to the softplus function, it serves rather as a *gate* than as a linear transformation. Therefore, one can speculate that the SSM has access to as many orthogonal subspaces as there are hidden dimensions, whereas the usual attention can utilize exponentially more. This might seem as a plausible explanation of why we do not observe the phase transition in the SSMs. However, we need to be very cautious here. @eq-ssm-attention is very non-linear in $x$ so our intuition from the usual attention might be misleading.
+

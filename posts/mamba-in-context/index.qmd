@@ -31,12 +31,15 @@ execute:
 ## **Introduction**
 
 Mamba [@gu2023mamba] is an architecture based on a Selective Structured State-Space model.
-Recently it has taken the community by storm --- and for a good reason. It features linear complexity in the sequence length and outperforms transformers of similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation [@ma2024u]. We are excited to see if Mamba could be used to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.^[This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photodetectors that collect the data.
+Recently it has taken the community by storm --- and for a good reason. It features linear complexity in the sequence length and outperforms transformers of similar size in the language modelling task. It also benefits from a hardware-aware implementation. It has already been applied to tasks such as medical image segmentation [@ma2024u]. 
+We are now applying Mamba to study ultra-high energy particles in a gigantic neutrino telescope in the South pole.^[This telescope is an instrumented cubic kilometer of ice, called IceCube. It has more than 5000 photodetectors that collect the data.
 Transformers are in general well suited for this task. But their quadratic dependence on the input length doesn't allow to study the brightest events that have hundreds of thousands of pulses.]
 
 Interestingly, the model design has been in part motivated by the mechanistic interpretability [@elhage2021mathematical] studies and specifically the idea of in-context learning and induction heads [@olsson2022context]. 
 
-So here we will take a look at the in-context learning in Mamba.
+So here we wanted take a look at the in-context learning in Mamba. Meanwhile, there are already two papers with seemingly contradicting results. @akyurek2024context studied synthetic languages with small vocabulary size and found that transformers are superior to other models. On the other hand, @grazzi2024mamba find thath Mamba is capable of in-context learning. We wanted to take a look at this ourselves.
+
+
 
 ## **In-Context Learning**
 
@@ -73,7 +76,7 @@ Mamba and the predecessor model H3 [@fu2022hungry] have been designed with the i
 
 ## **Mamba: phenomenological study**
 How can we check the in-context learning ability of Mamba?
-One simple test is to feed the model random garbage, repeated twice. Quite amusingly, transformers are able to learn the pattern and predict the second half of the sequence with high accuracy, like in @fig-random-qwen.
+One simple test is to feed the model random garbage, repeated twice. Quite amusingly, transformers are able to learn the pattern and predict the second half of the sequence with high accuracy, like in @fig-random-qwen. We used the smallest [Qwen-1.5](https://huggingface.co/collections/Qwen/qwen15-65c0a2f577b1ecb76d786524) model mainly since it has long context window which will be used below. Even GPT-2 124M is perfectly capable of solving this task as far as the sequence fits into the context length.
 
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/qwen-random-tokens.png){fig-align="center" width=60% #fig-random-qwen} -->
@@ -94,7 +97,7 @@ plt.show(fig)
 ```
 
 
-So what about Mamba? We used [this](https://huggingface.co/state-spaces/mamba-790m) model. And [this](https://github.com/jzhang38/LongMamba) [one](https://huggingface.co/PY007/LongMamba_16384_bs128_step400/tree/main). Here is the result:
+So what about Mamba? We used the [original](https://huggingface.co/state-spaces/mamba-790m) model which has been trained with 2k context length. Recently, [LongMamba](https://github.com/jzhang38/LongMamba) with 16k context has appeared, so we also used this [model](https://huggingface.co/PY007/LongMamba_16384_bs128_step400/tree/main). Here is the result:
 
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/mamba-random-tokens.png){fig-align="center" width=60% #fig-random-mamba} -->
@@ -118,7 +121,7 @@ plt.legend()
 plt.show(fig)
 ```
 
-Ok, what about longer contexts? Mamba should be able to handle really long sequences, right?
+Ok, what about even longer contexts?
 
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/mamba-random-tokens-long.jpeg){fig-align="center" width=60% #fig-random-mamba-long} -->
@@ -142,10 +145,11 @@ plt.legend()
 plt.show(fig)
 ```
 
-Oops! So, we can see that a small transformer deals with this easily, but Mamba struggles. Notice that this is a very artificial test, though. The data is completely out of distribution.^[Garbage in --- garbage out. It is actually really impressive that transformers deal with this so easily.] Maybe the model learns N-gram statistics too well and the induction heads cannot change the predictions.
+Oops! So, we can see that a small transformer deals with this easily, but Mamba struggles. Anyway, this is quite relatable -- transformers are clearly superhuman in memorising random crap.
 
-So what about normal texts?
+Notice that this is a very artificial test, though. The data is completely out of distribution.^[Garbage in --- garbage out. It is actually really impressive that transformers deal with this so easily.] One can speculate that perhaps mamba learns N-gram statistics too well and the induction heads cannot change the predictions. 
 
+So what about normal texts? We used Children Stories dataset which was a part of the [BabyLM Challenge](https://babylm.github.io). All stories are in a single file, which we tokenized and split into sequences of 8000 tokens. So the beggining of the sequences is not sequences are not aligned with the text in a minigful way. This is probably the reason why the plots are noisy.
 <!-- placeholder: create a better plot-->
 <!-- ::: {#fig-losses layout-ncol=2}
 
@@ -156,7 +160,7 @@ So what about normal texts?
 Loss per token as a function of token position, averaged over 200 sequences. Children stories.
 ::: -->
 ```{python}
-#| label: fig-losses
+#| label: fig-losses-stories
 #| fig-cap: Loss per token as a function of the token position, averaged over 200 sequences. Children stories dataset.
 import matplotlib.pyplot as plt
 import numpy as np
@@ -187,6 +191,20 @@ ax2.set_title('Mamba Loss')
 plt.tight_layout()
 plt.show()
 ```
+
+As one can see from @fig-losses-stories, the original Mamba strugles with longer sequnces. This is not so surprising since the model was trained with the 2k context length. LongMamba [post](https://github.com/jzhang38/LongMamba) has a nice intuition why this may happen. LonMamba performs on-par with transformer. So we do see the decrease of the per-token loss which signifies in-context learning. Can we quantify this?
+
+## In-Context Learning During Training
+
+TODO:
+
+* discuss the observations by @olsson2022context
+
+* introduce the score
+
+* Describe the models and the dataset.
+
+* explain why separating ssm (see the next subsection)
 
 ### **In-Context Learning Score**
 
@@ -263,9 +281,9 @@ plt.show()
 
 
 
-## **Understanding Selective SSMs**
+## ** SSSM-only models**
 
-### **Preliminaries**
+
 Mamba is more intricate than a transformer since it involves a selective state space model and gating, see [@gu2023mamba].
 It is known, however, that attention-only transformers already exhibit interesting behavior [@elhage2021mathematical]. Can we, analogously, consider a model based on the SSM only, without convolutions and gating?
 
@@ -344,76 +362,9 @@ Several observations are in order. First,  we can see that an SSM-only model is 
 At two layers things become interesting. The transformer experiences a "phase transition" and the score quickly drops.^[Our plots agree very well with [@olsson2022context] except that the phase change happens earlier in training. We use a rather small vocab size of 16384 and perhaps much smaller batch size of 24 sequence of 2048 tokens.]
 But for the 2-layer SSM the drop is far less significant. In fact, we have checked SSMs up to 16 layers and they cannot match the score of the two-layer attention-only transoformer. This is in contrast to the loss, which is lower for SSMs. One can speculate that selective SSMs are better at approximating N-gram statistics, but worse at in-context learning. Can we try to understand why is this the case? 
 
-### **Mathematical Formulation of SSM**
-Originally, the discovery of the induction heads became possible due to a neat mathematical formulation of transformers [@elhage2021mathematical]. Here we report our initial attempt to apply this formulation to SSMs.
 
-One difficulty that we immediately encounter is the presence of different dimensions in the model: the hidden dimension (in Mamba it is twice of the residual stream), the sequence length, and the state-space dimension. This makes it hard to distinguish between different multiplications. To make things as clear as possible, we will write all indices explicitly and use the Einstein summation convention. Furthermore, we will denote indices in such a way that it is clear what they mean.
-Namely, we will use letters $s, t, r$ for the sequence position, $i, j, k, l$ for the hidden dimension,^[Notice that Mamba expands the residual stream by a factor of two, so the hidden dimension is twice the embedding dimension.] and $\alpha, \beta$ for the state-space dimension. We will ignore the batch dimension since it could be trivially added.
+## Discussion
 
-::: {.callout-tip}
-## The usual attention
-To warm up, let's start with the usual transformer.
-The output of one attention head can be written as
-$$
-y_{t\,i} = A_{t\,s}(x) \, v_{s\,i},
-$$
-where $A_{t\,s}$ are the attention scores which depend on all inputs, but have only the sequence indices. Notice that we sum over the repeated indices. Writing this equation explicitly we have
-$$
-y_{t\,i} = \text{softmax} \left( x_{s\, k} W^Q_{k\, \alpha}  W^K_{l\, \alpha} x_{t\, l} \right)\; W^O_{i\, \beta}\, W^V_{j\, \beta}\, x_{s\, j}.
-$$
-Notice that $W^Q_{k\, \alpha} W^K_{l\, \alpha}$ and $W^O_{i\, \beta}\, W^V_{j\, \beta}$ are low-rank matrices (here $\alpha$ goes from 1 to hidden\_size/num\_heads). We can rewrite the previous equation as^[See [@elhage2021mathematical], where OV and KQ compositions have been introduced.]
-$$
-y_{t\,i} = \text{softmax} \left( x_{s\, k} W^{KQ}_{k\,l} x_{t\, l} \right)\; W^{OV}_{i\,j}\, x_{s\, j}.
-$${#eq-attention}
-:::
+We have seen that Mamba is capable of in-context learning, but not as good as transformers. One **very handwavy** explanation is that Mamba has to compress all the information from the previous tokens into a single state. What is the size of this state? There is a hidden state vector (with default size `d_state=16`) per every coordinate of the input vector. The input vector has size `2 * d_model`^[This is because the embedding vector of every token is expanded by a factor of 2 before passing to the SSM, so the input vector is twice as large as the embedding vector.] Bare in mind also that those hidden state vectors do not talk to each other explicitly. So the total size of the state is `2 * d_state * d_model`. 
 
-
-Now, after some index gymnastic, let's move to SSMs.
-The input to the SSM is dented $x_{s, i}$, the output is $y_{s, i}$. Notice that in  our formulation the hidden state never shows up.
-Here we list the parameters of the SSM:^[The definitions here match the actual code and agree with the paper up to the second (?) order. We also don't show $D$ here.]
-
-$$
-\begin{aligned}
-\Delta_{t\, i} (x) &= \text{softplus}(W^\Delta_{i\, j}\, x_{t\, j}),\\
-B_{t\, \alpha}(x) &= W^B_{\alpha\, i} \, x_{t\, i},\\
-C_{t\, \alpha}(x) &= W^C_{\alpha\, i} \, x_{t\, i},\\
-\bar{A}_{t\,i\,\alpha}(x) &= \exp \left(\Delta_{t\, i}(x)\, A_{i\, \alpha}\right),\\
-\bar{B}_{t\,i\,\alpha}(x) &= \Delta_{t\, i}(x) B_{t\, \alpha}(x).\\
-\end{aligned}
-$${#eq-eq-ssm}
-We sum over the dummy indices. By dummy indices we mean the indices that appear twice on *one side of the euation*.
-For example, $B_{t\, \alpha}(x) = W^B_{\alpha\, i} \, x_{t\, i}$ is a shorthand for  $B_{t\, \alpha}(x) = \sum_i W^B_{\alpha\, i} \, x_{t\, i}$. In matrix notations, we would write it as $B = X\, \left( W^B \right)^T$. But notice that there is no sum over $i$ and $t$ in  $\bar{A}_{t\,i\,\alpha}(x) = \exp \left(\Delta_{t\, i}(x) \cdot A_{i\, \alpha}\right)$ since $i$ and $t$ appear on both the left and the right hand side of the equation. This is precisely the convention of the `torch.einsum` function.
-
-
-::: {.callout-important}
-## Selective SSM
-Now, we are ready to take a deep breath and write the output of the SSM:
-$$
-y_{t\,i} = x_{t\,k} \, W_{\alpha \, k}^C \; \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\; W_{\alpha\, j}^B \,x_{s\,j}\; \Delta_{s\,i}(x)\, x_{s\,i}.
-$${#eq-ssm-attention}
-Let's rewrite this as
-$$
-y_{t\,i} = q_{t\, \alpha} \; g_{\alpha\, \beta\, s\,t\,i}(x) \; k_{s\, \beta} \; v_{s\,i},
-$${#eq-ssm-attention-short}
-where
-$$
-\begin{aligned}
-q_{t\, \alpha} &=  W_{\alpha \, k}^C\,x_{t\,k} ,\\
-k_{s\, \beta} &= W_{\alpha\, j}^B \,x_{s\,j} ,\\
-v_{s\,i} &= \Delta_{s\,i}(x)\, x_{s\,i},\\
-g_{\alpha\, \beta\, s\,t\,i}(x) &= \exp{\left(A_{\alpha\, i} \sum_{r=s+1}^{t} \Delta_{r\,i}(x)\right)}\, \delta_{\alpha\beta}.
-\end{aligned}
-$$
-:::
-This looks very similar to attention! 
-
-
-More specifically, the linear attention without softmax. Matrices $W^B$ and $W^C$ are the analogues of the query and the key matrices in the attention mechanism. They project  from the hidden dimension to the much smaller state space dimension. Notice that this is the feature of the *selective* SSM. In the usual SSMs $B$ and $C$ do not depend on $x$ so this analogy to keys and queries is lost.
-
-There are important differences though. First, instead of multiple attention heads with different projections, we have only one, but keys and queries are multiplied with a "metric" $g_{\alpha\, \beta\, s\,t\,i}(x)$ which is different for every coordinate $i$ across the hidden dimension.^[Interestingly, the exponential depending on sequence positions of the source and destination tokens also appears in the case of the usual position embeddings [@tsai2019transformer], but in the usual transformers it doesn't depend on the token embeddings.]
-So, in some sense, we have as many attention heads as there are hidden dimensions. 
-
-Secondly, the value is not just a linear transformation of the token embedding as in the usual attention mechanism @eq-attention. Instead, it is gated by the matrix $\Delta_{s\,i}(x)$, which in turn depends on the input.
-
-Those differences might be crucial. To understand why, let's recall that there are exponentially many almost orthogonal vectors in high dimensions, see e.g.~[@Tao2013CheapKL]. So if we perform a linear transformation of the input, like in @eq-attention, we get a new vector that could live in many of different, almost orthogonal subspaces. In the case of the Selective SSM, every "attention head" only writes a single coordinate. Of course, there is a dependence on the other coordinates via $\Delta$, but due to the softplus function, it serves rather as a *gate* than as a linear transformation. Therefore, one can speculate that the SSM has access to as many orthogonal subspaces as there are hidden dimensions, whereas the usual attention can utilize exponentially more. This might seem as a plausible explanation of why we do not observe the phase transition in the SSMs. However, we need to be very cautious here. @eq-ssm-attention is very non-linear in $x$ so our intuition from the usual attention might be misleading.
-
+In the attention mechanism, on the other hand, we have to pass the KV cache from all previous tokens. This is `2 * d_model * context_length`. So the amount of information^[We are sloppy here. Transformers and SSM compress information in different ways, so the diensioanlity of the cache does not necessary transforms into information in the strict mathematical sense.] that attetnion passes to the next token surpasses that of SSM once the context is longer than `d_state`. Again, let us stress that this is a specualtion so far.
