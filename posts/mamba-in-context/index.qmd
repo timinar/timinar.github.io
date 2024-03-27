@@ -4,7 +4,7 @@ title: "Mamba and in-context learing: initial look"
 author: 
   - "Inar Timiryasov"
   - "Jean-Loup Tastet"
-date: "2024-02-22"
+date: "2024-03-27"
 bibliography: SSSM_refs.bib
 draft: true
 execute:
@@ -36,17 +36,15 @@ plt.rcParams['axes.facecolor'] = theme_background_color
 plt.rcParams['figure.dpi'] = 150 # For raster graphics (less sharp, heavier, trivial to render)
 ```
 
-# DRAFT 2024-02-22
-
 ## Introduction
 
-Mamba [@gu2023mamba] is a recently-introduced architecture based on a Selective Structured State-Space model (S6), that has taken the community by storm --- and for good reason. It features linear complexity in the sequence length, and was presented as a compelling alternative to the transformer architecture --- being one of the few models that can match or exceed the performance of similar-sized transformers on some language modelling tasks. It also greatly benefited from a hardware-aware implementation released along with the paper, thus enabling parallel training at speeds on par with transformers.
+Mamba [@gu2023mamba] is a recently-introduced architecture based on a Selective Structured State-Space model (S6), that has taken the community by storm --- and for good reason. It features linear complexity in the sequence length, and was presented as a compelling alternative to the transformer architecture --- being one of the few models that can match or exceed the performance of similar-sized transformers on some language modelling tasks. It also greatly benefits from a hardware-aware implementation released along with the paper, thus enabling parallel training at speeds on par with transformers.
 Mamba has already seen applications to tasks such as medical image segmentation [@ma2024u], and we are currently investigating its use to study ultra-high energy particles in the IceCube detector, a gigantic neutrino telescope located at the South pole.^[This telescope is an instrumented cubic kilometer of ice, containing more than 5000 photodetectors, that are designed to detect the Cherenkov light emitted by relativistic particles travelling through the ice.
-Transformers are in general well suited for this task. But their quadratic dependence on the input length doesn't allow to study the brightest events, that may contain hundreds of thousands of pulses.]
+Transformers are in general well suited for this task. But their quadratic dependence on the input length prevents us from studying the brightest events, that may contain hundreds of thousands of pulses.]
 
-Interestingly, the model design has been motivated in part by the mechanistic interpretability [@elhage2021mathematical] studies and specifically by the idea of in-context learning and induction heads [@olsson2022context].
+Interestingly, the model design has been motivated in part by the mechanistic interpretability studies [@elhage2021mathematical] and specifically by the idea of in-context learning and induction heads [@olsson2022context].
 
-In the present post, we will take a look at in-context learning in Mamba. Meanwhile, there are already two papers out, with seemingly contradictory results. @akyurek2024context studied synthetic languages with small vocabulary size and found that transformers are superior to other models. On the other hand, @grazzi2024mamba find thath Mamba is capable of in-context learning. We wanted to take a look at this ourselves. **TODO: also discuss @aksenov2024linear**
+In the present post, we will take a look at in-context learning in Mamba. Meanwhile, there are already two papers out, with seemingly contradictory results. @akyurek2024context studied synthetic languages with small vocabulary size and found that transformers are superior to other models. On the other hand, @grazzi2024mamba find thath Mamba is capable of in-context learning. We wanted to take a look at this ourselves. **TODO: also discuss @aksenov2024linear?**
 
 
 
@@ -69,6 +67,7 @@ fig = plt.figure()
 plt.plot(qwen_loss, label = 'Qwen1.5-0.5B')
 plt.xlabel('Token position')
 plt.ylabel('Per Token Loss')
+plt.xlim(-15, 8000)
 plt.legend()
 plt.show(fig)
 ```
@@ -81,7 +80,7 @@ Induction heads can already form in models as small as two-layer, attention-only
 <!-- add predictions html-->
 
 Mamba and its predecessor model, H3 [@fu2022hungry], have been designed with the idea of induction heads in mind.
-The present post aims to investigate whether this actually resulted in an improved in-context learning ability for Mamba, by comparing it to state-of-the-art models based on the transformer architecture. **TODO: also compare to S4?**
+The present post aims to investigate whether this actually results in an improved in-context learning ability for Mamba, by comparing it to state-of-the-art models based on the transformer architecture. **TODO: also compare to S4?**
 
 
 ## Mamba: Phenomenological Study
@@ -102,6 +101,7 @@ import numpy as np
 qwen_loss = np.loadtxt('./data/losses_800_qwen.txt')
 
 fig = plt.figure()
+plt.autoscale(tight=True)
 plt.plot(qwen_loss, label = 'Qwen1.5-0.5B')
 plt.xlabel('Token position')
 plt.ylabel('Per Token Loss')
@@ -111,7 +111,7 @@ plt.show(fig)
 
 
 Can Mamba do as well as transformers on this task? We tested both the [original model](https://huggingface.co/state-spaces/mamba-790m), which was trained with a 2k context length, as well as the newer [LongMamba](https://huggingface.co/PY007/LongMamba_16384_bs128_step400/tree/main), which was [further fine-tuned](https://github.com/jzhang38/LongMamba) with a 16k context. Here are the results:
-**TODO: compare similar-sized models, in case it makes a difference**
+**TODO: compare similar-sized models, in case it makes a difference?**
 
 <!-- placeholder: create a better plot-->
 <!-- ![Loss per token as a function of token position, averaged over 200 sequences. First half of the tokens is randomly generated, the second half is just a repetition of the first one.](fig/mamba-random-tokens.png){fig-align="center" width=60% #fig-random-mamba} -->
@@ -126,6 +126,7 @@ mamba_loss = np.loadtxt('./data/losses_800_mamba.txt')
 longmamba_loss = np.loadtxt('./data/losses_800_longmamba.txt')
 
 fig = plt.figure()
+plt.autoscale(tight=True)
 plt.plot(qwen_loss, label = 'Qwen1.5-0.5B')
 plt.plot(mamba_loss, label = 'Mamba-790m')
 plt.plot(longmamba_loss, label = 'LongMamba-2.8B', alpha=0.7)
@@ -135,7 +136,7 @@ plt.legend()
 plt.show(fig)
 ```
 
-While the small transformer solves this task nearly perfectly, the two Mamba-based models can only reduce the loss by $\approx 8\,\mathrm{nats}$. The loss increases with the token position in the repeated sequence (less so with LongMamba), suggesting that the model has a limited capacity to memorize previous tokens. **TODO: check if this sounds correct**
+While the small transformer solves this task nearly perfectly, the two Mamba-based models can only reduce the loss by $\approx 8\,\mathrm{nats}$. The loss increases with the token position in the repeated sequence (less so with LongMamba), suggesting that the model has a limited capacity to memorize previous tokens. **TODO: check if this sounds correct** **JL: I am still not fully convinced by this interpretation: why can the model initially remember (at least approximately) tokens that are 4000 tokens back (in @fig-random-mamba-long), but fails to do so later in the context, while the distance between the original and repeated token always remains the same? (=4000)**
 
 What about even longer sequences? Let’s repeat this test with a sequence of 4000 random tokens, repeated twice.
 
@@ -152,6 +153,7 @@ mamba_loss = np.loadtxt('./data/losses_8k_mamba.txt')
 longmamba_loss = np.loadtxt('./data/losses_8000_longmamba.txt')
 
 fig = plt.figure()
+plt.autoscale(tight=True)
 plt.plot(qwen_loss, label = 'Qwen1.5-0.5B')
 plt.plot(mamba_loss, label = 'Mamba-790m')
 plt.plot(longmamba_loss, label = 'LongMamba-2.8B',alpha=0.7)
@@ -161,13 +163,13 @@ plt.legend()
 plt.show(fig)
 ```
 
-Oops! While the small transformer can still deal with this task easily, both Mambas struggle, with the loss of Mamba exploding after about 1500-2000 tokens (which, incidentally, is similar to the 2k sequence length it was trained on). **TODO: try LongMamba with a 2 x 32k sequence length to see if it explodes** This makes the Mambas somehow more relatable --- after all, transformers' ability to memorize random sequences is clearly superhuman.
+Oops! While the small transformer can still deal with this task easily, both Mambas struggle, with the loss of Mamba exploding after about 1500-2000 tokens (which, incidentally, is similar to the 2k sequence length it was trained on). **TODO: try LongMamba again, this time with a 2 x 32k sequence length, to see if it explodes** This makes the Mambas somehow more relatable --- after all, transformers' ability to memorize random sequences is clearly superhuman.
 
 Let us emphasize that this is a very artificial test, with random sequences being completely out of distribution.^[Garbage in --- garbage out. It is actually really impressive that transformers deal with this task so easily.] One can speculate that perhaps Mamba learns N-gram statistics too well and the induction heads cannot change the predictions. **FIXME: this last sentence sounds a bit out of context. We should try to motivate it better**
 
 ### Natural Language
 
-Since random tokens may be too far out of distribution, what about in-context learning with natural text? To compare the models in this more realistic setting, we used the Children Stories dataset, which was used as part of the [BabyLM Challenge](https://babylm.github.io). All the stories are contained within a single file, which we tokenized and split into sequences of 8000 tokens.^[Because of this naive splitting, the sequences are not aligned with the individual stories in a meaningful way, which may contribute to making the plots noisier.]
+Since random tokens may be too far out of distribution, what about in-context learning with natural text? To compare the models in this more realistic setting, we used the Children Stories dataset, which was used as part of the [BabyLM Challenge](https://babylm.github.io). All the stories are contained within a single file, which we tokenized and split into sequences of 8000 tokens.^[Because of this naive splitting, the sequences are not aligned with the individual stories in a meaningful way, which may contribute to making the plots slightly noisier.]
 <!-- placeholder: create a better plot-->
 <!-- ::: {#fig-losses layout-ncol=2}
 
@@ -194,7 +196,7 @@ ax1.set_xlabel('Token position')
 ax1.set_ylabel('Per Token Loss')
 ax1.legend()
 ax1.set_title('Qwen Loss')
-
+ax1.set_xlim(-30, 8000)
 
 
 ax2.plot(longmamba_loss, label='LongMamba-2.8B', color='tab:green')
@@ -204,27 +206,30 @@ ax2.set_xlabel('Token position')
 #ax2.set_ylabel('Per Token Loss')
 ax2.legend()
 ax2.set_title('Mamba Loss')
+ax2.set_xlim(-30, 8000)
 
 
 plt.tight_layout()
 plt.show()
 ```
 
-As one can see from @fig-losses-stories, the original Mamba struggles with longer sequences. This is not so surprising, since the model was trained with only a 2k context length. The [LongMamba post](https://github.com/jzhang38/LongMamba) has a nice intuitive explanation of why this may happen. **TODO: give a tiny bit more details about the explanation** On the other hand, the version that was fine-tuned on longer sequences --- LongMamba --- performs on par with the transformer, and in both cases we see a decrease of the per-token loss, which shows that in-context learning is happening. Can we quantify it?
+As one can see from @fig-losses-stories, the original Mamba struggles with longer sequences. This is not so surprising, since the model was trained with only a 2k context length. The [LongMamba post](https://github.com/jzhang38/LongMamba) has a nice intuitive explanation of why this may happen. **TODO: give a tiny bit more details about what this explanation consists in** On the other hand, the version that was fine-tuned on longer sequences --- LongMamba --- performs on par with the transformer, and in both cases we see a decrease of the per-token loss, which shows that in-context learning is happening. Can we quantify it?
 
 ## In-Context Learning During Training
 
+<!--
 **TODO:**
 
-* discuss the observations by @olsson2022context
+* **discuss the observations by @olsson2022context**
 
-* ~~introduce the score~~
+* **~~introduce the score~~**
 
-* Describe the models ~~and the dataset~~.
+* **Describe the models ~~and the dataset~~.**
 
-* explain why separating ssm (see the next subsection -> I pooled it into the same section)
+* **explain why separating ssm (see the next subsection -> I pooled it into the same section)**
+-->
 
-### In-Context Learning Score
+<!-- ### In-Context Learning Score -->
 
 In order to follow the evolution of the in-context learning capabilities of the model as it trains, we follow @olsson2022context and introduce the so-called _in-context learning score_, define loosely as the difference between the mean per-token loss in late and early context. The precise definition that we use is:
 
@@ -304,6 +309,8 @@ ax2.legend()
 ax2.set_ylim(3.5, 5.)
 #ax2.set_title('Eval Loss Over Training')
 
+for ax in [ax1, ax2]:
+    ax.autoscale(axis='x', tight=True)
 
 #plt.tight_layout()
 plt.show()
@@ -365,12 +372,14 @@ ax2.legend()
 ax2.set_ylim(3.5, 5.)
 #ax2.set_title('Eval Loss Over Training')
 
+for ax in [ax1, ax2]:
+    ax.autoscale(axis='x', tight=True)
 
 #plt.tight_layout()
 plt.show()
 ```
 
-Several observations are in order. First, we can see that an SSM-only model already shows solid language modelling performance, with a loss lower or equal to that of Llama.^[We use the same tokenizer and the same model size, with only the learning rate tuned for each model separately.] Second, both single-layer models --- either the attention-only transformer or the SSM --- struggle with in-context learning. This is expected since we know that induction heads can only form in two-layer models [@elhage2021mathematical]. **TODO: clarify why 1-layer Mamba is a bit better here (conv1d?)**
+Several observations are in order. First, we can see that an SSM-only model already shows solid language modelling performance, with a loss lower or equal to that of Llama.^[We use the same tokenizer and the same model size, with only the learning rate tuned for each model separately.] Second, both single-layer models --- either the attention-only transformer or the SSM --- struggle with in-context learning. This is expected since we know that induction heads can only form in two-layer models [@elhage2021mathematical]. **TODO: clarify why 1-layer Mamba is a bit better here (conv1d? try ablating it?)**
 
 At two layers, things become interesting. The transformer experiences a "phase transition" (previously observed by @olsson2022context) where the score quickly drops as induction heads form.^[Our plots agree very well with [@olsson2022context] except that the phase change happens earlier in training. We use a rather small vocab size of 16384 and perhaps a much smaller batch size, of 24 sequence of 2048 tokens each.]
 But for the two-layer SSM, the drop is far less significant. In fact, we have tested models with up to 16 S6 layers, and they cannot match the score of the two-layer attention-only transformer. This is in contrast to the loss, which remains lower for SSMs. This leads us to speculate that selective SSMs are better at approximating N-gram statistics, but worse at in-context learning. Can we try to understand why this is the case? 
