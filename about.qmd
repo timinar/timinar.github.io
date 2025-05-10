@@ -16,32 +16,40 @@ about:
 
 ---
 
-I am a postdoc at the University of Copenhagen working on the intersection of AI and particle physics. 
-<!-- I am a Senior Postdoctoral Researcher at the Niels Bohr Institute, University of Copenhagen, specializing in the intersection of AI and particle physics. My work involves leveraging advanced machine learning techniques to unravel complex phenomena in particle physics. -->
+Markdown
+---
+# ... (rest of YAML frontmatter) ...
+---
 
+## About Me
 
-[My CV](/assets/Timiryasov_resume.pdf)
+I am an Assistant Professor at the Niels Bohr Institute, University of Copenhagen, where my research focuses on pioneering AI-driven breakthroughs in fundamental science. With a background in theoretical physics, my work applying AI across diverse scientific datasets—from particle physics and gravitational waves to natural language—has cultivated a deep intuition for the complexity and scaling of different modalities and how machine learning models can leverage them.
 
-## Work Experience
+My recent research includes developing **PolarBERT**, the first foundation model for Antarctic neutrino telescope data, and training impactful sample-efficient **large language models** (like BabyLlama, a top performer in the BabyLM challenge). I am passionate about pushing the limits of our understanding of the natural world by developing and applying advanced AI.
 
-- **Postdoctoral Researcher** (2021--present)  
-  *Niels Bohr Institute, University of Copenhagen*\
-  Developing AI models for applications in particle physics, including methods to reinterpret LHC data analysis pipelines.
+[My Full CV](/assets/Timiryasov_resume.pdf) | [Publications (Google Scholar)](https://scholar.google.com/citations?user=ff_XscYAAAAJ&hl=en)
 
-  I also trained Baby Llamas!
+## Research Experience
 
-- **Visiting Researcher** (2016--present)  
-  *CERN*\
-  Member of the SHiP collaboration searching for new feebly interacting particles.
+**Assistant Professor** (Jan 2025 – Present)  
+*Niels Bohr Institute, University of Copenhagen*
+- Leading development of foundational models for science, leveraging multi-modal approaches with large-scale datasets (e.g., 65 TB from LHC, medical wearables).
+- Supervising research on advanced LLM techniques, including RL for attention pattern analysis in verifiable domains.
 
-- **Postdoctoral Researcher** (2016--2021)  
-  *École Polytechnique Fédérale de Lausanne*\
-  Worked on transforming theoretical problems into computable models, taught courses, and supervised Master’s students.
+**Senior Postdoctoral Researcher** (Aug 2021 – Dec 2024)  
+*Niels Bohr Institute, University of Copenhagen*
+- Pioneered **PolarBERT**, the first transformer-based foundation model for Antarctic IceCube neutrino data, achieving excellent sample efficiency.
+- Developed **BabyLlama**, the top-performing decoder-only LLM (leveraging self-distillation) in the 2023 BabyLM challenge; adopted as the 2024 official baseline.
+- Led teams to Gold & Silver medals in science-focused Kaggle competitions (G2Net Gravitational Waves, IceCube Neutrinos).
 
+**Visiting Researcher** (Jun 2016 – Present)  
+*CERN, Switzerland*
+- Active member of the SHiP international collaboration; developed advanced quantum Monte Carlo simulations for new particle discovery potential (Majorana particles).
 
-<!-- - **Professional Experience**: Copenhagen Univeristy, CERN, École Polytechnique Fédérale de Lausanne.
-- **Key Projects**: Training LLMs in BabyLM challenge (top 5%), AI models in particle physics, Kaggle Competitions (Gold and Silver Medals).
-- **Teaching and Mentoring**: Courses in group theory, classical field theory; supervision of Master’s students.
-- **Technical Expertise**: Python, Julia, PyTorch, Transformers, Pandas, Linux, Git, and more. -->
+**Postdoctoral Researcher** (Jun 2016 – Jul 2021)  
+*École Polytechnique Fédérale de Lausanne, Switzerland*
+- Spearheaded a large-scale, computationally intensive project on the origin of matter in the Universe.
+- Pioneered methods to transform complex quantum field theory problems into computable models, leading to top-tier publications.
+- Taught Master's courses (Group Theory, Classical Field Theory) and supervised 8 Master's students.
 
 
